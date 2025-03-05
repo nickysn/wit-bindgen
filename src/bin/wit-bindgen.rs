@@ -72,6 +72,15 @@ enum Opt {
         #[clap(flatten)]
         args: Common,
     },
+
+    /// Generates bindings for Pascal guest modules.
+    #[cfg(feature = "pascal")]
+    Pascal {
+        #[clap(flatten)]
+        opts: wit_bindgen_pascal::Opts,
+        #[clap(flatten)]
+        args: Common,
+    },
 }
 
 #[derive(Debug, Parser)]
@@ -137,6 +146,8 @@ fn main() -> Result<()> {
         Opt::TinyGo { opts, args } => (opts.build(), args),
         #[cfg(feature = "csharp")]
         Opt::CSharp { opts, args } => (opts.build(), args),
+        #[cfg(feature = "pascal")]
+        Opt::Pascal { opts, args } => (opts.build(), args),
     };
 
     gen_world(generator, &opt, &mut files).map_err(attach_with_context)?;
