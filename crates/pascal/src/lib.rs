@@ -1591,7 +1591,10 @@ impl InterfaceGenerator<'_> {
         self.src
             .h_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\n"));
         self.src
-            .c_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\nvar\n  list_len: SizeUInt;\n  list_ptr: Pointer;\n  i: SizeUInt;\nbegin\n"));
+            .c_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\n"));
+        let c_helpers_var_section_start = self.src.c_helpers.len();
+        let mut var_section = String::new();
+        self.src.c_helpers("begin\n");
         let c_helpers_body_start = self.src.c_helpers.len();
         match &self.resolve.types[id].kind {
             TypeDefKind::Type(t) => self.free(t, "ptr"),
@@ -1616,11 +1619,15 @@ impl InterfaceGenerator<'_> {
                 uwriteln!(self.src.c_helpers, "  if list_len > 0 then\n  begin");
                 let mut t_name = String::new();
                 self.gen.push_type_name(t, &mut t_name);
+                var_section = format!("var
+                  i: SizeUInt;
+                  list_len: SizeUInt;
+                  list_ptr: P{t_name};\n");
                 self.src
-                    .c_helpers(&format!("{{{t_name} *}}list_ptr := ptr^.ptr;\n"));
+                    .c_helpers("list_ptr := ptr^.ptr;\n");
                 self.src
                     .c_helpers("for i := 0 to list_len - 1 do\nbegin\n");
-                self.free(t, &format!("@((P{t_name}(list_ptr))[i])"));
+                self.free(t, &format!("@list_ptr[i]"));
                 self.src.c_helpers("end;\n");
                 uwriteln!(self.src.c_helpers, "    FreeMem(list_ptr);");
                 uwriteln!(self.src.c_helpers, "  end;");
@@ -1666,6 +1673,7 @@ impl InterfaceGenerator<'_> {
             }
             TypeDefKind::Unknown => unreachable!(),
         }
+        self.src.c_helpers.as_mut_string().insert_str(c_helpers_var_section_start, &var_section);
         if c_helpers_body_start == self.src.c_helpers.len() {
             self.src.c_helpers.as_mut_string().truncate(c_helpers_start);
             self.src.h_helpers.as_mut_string().truncate(h_helpers_start);
