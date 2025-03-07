@@ -3070,34 +3070,34 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 }
             }
 
-            Instruction::I32Load { offset } => self.load("int32_t", *offset, operands, results),
-            Instruction::I64Load { offset } => self.load("int64_t", *offset, operands, results),
-            Instruction::F32Load { offset } => self.load("float", *offset, operands, results),
+            Instruction::I32Load { offset } => self.load("int32", *offset, operands, results),
+            Instruction::I64Load { offset } => self.load("int64", *offset, operands, results),
+            Instruction::F32Load { offset } => self.load("single", *offset, operands, results),
             Instruction::F64Load { offset } => self.load("double", *offset, operands, results),
             Instruction::PointerLoad { offset } => {
-                self.load("uint8_t *", *offset, operands, results)
+                self.load("Puint8", *offset, operands, results)
             }
-            Instruction::LengthLoad { offset } => self.load("size_t", *offset, operands, results),
-            Instruction::I32Store { offset } => self.store("int32_t", *offset, operands),
-            Instruction::I64Store { offset } => self.store("int64_t", *offset, operands),
-            Instruction::F32Store { offset } => self.store("float", *offset, operands),
+            Instruction::LengthLoad { offset } => self.load("SizeUInt", *offset, operands, results),
+            Instruction::I32Store { offset } => self.store("int32", *offset, operands),
+            Instruction::I64Store { offset } => self.store("int64", *offset, operands),
+            Instruction::F32Store { offset } => self.store("single", *offset, operands),
             Instruction::F64Store { offset } => self.store("double", *offset, operands),
-            Instruction::I32Store8 { offset } => self.store("int8_t", *offset, operands),
-            Instruction::I32Store16 { offset } => self.store("int16_t", *offset, operands),
-            Instruction::PointerStore { offset } => self.store("uint8_t *", *offset, operands),
-            Instruction::LengthStore { offset } => self.store("size_t", *offset, operands),
+            Instruction::I32Store8 { offset } => self.store("int8", *offset, operands),
+            Instruction::I32Store16 { offset } => self.store("int16", *offset, operands),
+            Instruction::PointerStore { offset } => self.store("Puint8_t", *offset, operands),
+            Instruction::LengthStore { offset } => self.store("SizeUInt", *offset, operands),
 
             Instruction::I32Load8U { offset } => {
-                self.load_ext("uint8_t", *offset, operands, results)
+                self.load_ext("uint8", *offset, operands, results)
             }
             Instruction::I32Load8S { offset } => {
-                self.load_ext("int8_t", *offset, operands, results)
+                self.load_ext("int8", *offset, operands, results)
             }
             Instruction::I32Load16U { offset } => {
-                self.load_ext("uint16_t", *offset, operands, results)
+                self.load_ext("uint16", *offset, operands, results)
             }
             Instruction::I32Load16S { offset } => {
-                self.load_ext("int16_t", *offset, operands, results)
+                self.load_ext("int16", *offset, operands, results)
             }
 
             Instruction::GuestDeallocate { .. } => {
