@@ -1791,7 +1791,10 @@ impl InterfaceGenerator<'_> {
         );
         self.src.c_adapters("\n");
         self.src.c_adapters(&c_sig.sig);
-        self.src.c_adapters(";\nbegin\n");
+        self.src.c_adapters(";\n");
+        let src_var_section_start = self.src.c_adapters.len();
+        let mut var_section = String::new();
+        self.src.c_adapters("begin\n");
 
         // construct optional adapters from maybe pointers to real optional
         // structs internally
@@ -1802,16 +1805,17 @@ impl InterfaceGenerator<'_> {
                 if let Type::Id(id) = ty {
                     if let TypeDefKind::Option(_) = &self.resolve.types[*id].kind {
                         let ty = self.gen.type_name(ty);
+                        var_section.push_str(&format!("{param}: {ty};\n"));
                         uwrite!(
                             optional_adapters,
-                            "{ty} {param};
-                            {param}.is_some = maybe_{param} != NULL;"
+                            "{param}.is_some := maybe_{param} <> nil;"
                         );
                         uwriteln!(
                             optional_adapters,
-                            "if (maybe_{param}) {{
-                                {param}.val = *maybe_{param};
-                            }}",
+                            "if maybe_{param} then
+                            begin
+                              {param}.val := maybe_{param}^;
+                            end;",
                         );
                     }
                 }
@@ -1848,15 +1852,18 @@ impl InterfaceGenerator<'_> {
         } = f;
 
         if import_return_pointer_area_size > 0 {
-            self.src.c_adapters(&format!(
+            var_section.push_str(&format!(
                 "\
-                    __attribute__((__aligned__({import_return_pointer_area_align})))
-                    uint8_t ret_area[{import_return_pointer_area_size}];
+                    //__attribute__((__aligned__({import_return_pointer_area_align})))
+                    ret_area: array[0..{import_return_pointer_area_size}-1] of uint8;
                 ",
             ));
         }
 
         self.src.c_adapters(&String::from(src));
+        if !var_section.is_empty() {
+            self.src.c_adapters.as_mut_string().insert_str(src_var_section_start, &format!("var\n{var_section}"));
+        }
         self.src.c_adapters("end;\n");
     }
 
