@@ -2371,24 +2371,24 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
 
             // TODO: checked?
-            Instruction::U8FromI32 => results.push(format!("(uint8_t) ({})", operands[0])),
-            Instruction::S8FromI32 => results.push(format!("(int8_t) ({})", operands[0])),
-            Instruction::U16FromI32 => results.push(format!("(uint16_t) ({})", operands[0])),
-            Instruction::S16FromI32 => results.push(format!("(int16_t) ({})", operands[0])),
-            Instruction::U32FromI32 => results.push(format!("(uint32_t) ({})", operands[0])),
+            Instruction::U8FromI32 => results.push(format!("uint8({})", operands[0])),
+            Instruction::S8FromI32 => results.push(format!("int8({})", operands[0])),
+            Instruction::U16FromI32 => results.push(format!("uint16({})", operands[0])),
+            Instruction::S16FromI32 => results.push(format!("int16({})", operands[0])),
+            Instruction::U32FromI32 => results.push(format!("uint32({})", operands[0])),
             Instruction::S32FromI32 | Instruction::S64FromI64 => results.push(operands[0].clone()),
-            Instruction::U64FromI64 => results.push(format!("(uint64_t) ({})", operands[0])),
+            Instruction::U64FromI64 => results.push(format!("uint64({})", operands[0])),
 
             Instruction::I32FromU8
             | Instruction::I32FromS8
             | Instruction::I32FromU16
             | Instruction::I32FromS16
             | Instruction::I32FromU32 => {
-                results.push(format!("(int32_t) ({})", operands[0]));
+                results.push(format!("int32({})", operands[0]));
             }
             Instruction::I32FromS32 | Instruction::I64FromS64 => results.push(operands[0].clone()),
             Instruction::I64FromU64 => {
-                results.push(format!("(int64_t) ({})", operands[0]));
+                results.push(format!("int64({})", operands[0]));
             }
 
             // f32/f64 have the same representation in the import type and in C,
@@ -2402,10 +2402,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
             // TODO: checked
             Instruction::CharFromI32 => {
-                results.push(format!("(uint32_t) ({})", operands[0]));
+                results.push(format!("uint32({})", operands[0]));
             }
             Instruction::I32FromChar => {
-                results.push(format!("(int32_t) ({})", operands[0]));
+                results.push(format!("int32({})", operands[0]));
             }
 
             Instruction::Bitcasts { casts } => {
