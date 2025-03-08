@@ -1097,7 +1097,14 @@ void {ns}_{snake}_drop_own({own} handle) {{
         // All resources, whether or not they're imported or exported, have an
         // handle-index-based representation for "own" handles.
         self.src.h_defs(&format!(
-            "\ntypedef struct {own} {{\nint32_t __handle;\n}} {own};\n"
+            "
+            type
+              PP{own} = ^P{own};
+              P{own} = ^{own};
+              {own} = record
+                __handle: int32;
+              end;
+            "
         ));
 
         if self.in_import {
@@ -1105,7 +1112,14 @@ void {ns}_{snake}_drop_own({own} handle) {{
             // way as owned handles. They're given a unique type, however, to
             // prevent type confusion at runtime in theory.
             self.src.h_defs(&format!(
-                "\ntypedef struct {borrow} {{\nint32_t __handle;\n}} {borrow};\n"
+                "
+                type
+                  PP{borrow} = ^P{borrow};
+                  P{borrow} = ^{borrow};
+                  {borrow} = record
+                    __handle: int32;
+                  end;
+                "
             ));
 
             if self.autodrop_enabled() {
