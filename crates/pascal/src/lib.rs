@@ -1234,8 +1234,9 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         self.docs(docs, SourceType::HDefs);
         self.start_typedef_struct(id);
         for (i, ty) in tuple.types.iter().enumerate() {
+            uwrite!(self.src.h_defs, " f{i}: ");
             self.print_ty(SourceType::HDefs, ty);
-            uwriteln!(self.src.h_defs, " f{i};");
+            uwriteln!(self.src.h_defs, ";");
         }
         self.finish_typedef_struct(id);
     }
