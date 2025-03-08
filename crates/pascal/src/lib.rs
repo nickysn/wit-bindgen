@@ -1243,11 +1243,17 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
     fn type_flags(&mut self, id: TypeId, name: &str, flags: &Flags, docs: &Docs) {
         self.src.h_defs("\n");
         self.docs(docs, SourceType::HDefs);
-        self.src.h_defs("typedef ");
         let repr = flags_repr(flags);
-        self.src.h_defs(int_repr(repr));
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        let int_t = int_repr(repr);
+
+        uwriteln!(
+            self.src.h_defs,
+            "type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = {int_t};",
+            &self.gen.type_names[&id],
+        );
 
         if flags.flags.len() > 0 {
             self.src.h_defs("\n");
@@ -1257,7 +1263,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
             self.docs(&flag.docs, SourceType::HDefs);
             uwriteln!(
                 self.src.h_defs,
-                "#define {ns}_{}_{} (1 << {i})",
+                "const {ns}_{}_{} = 1 shl {i};",
                 name.to_shouty_snake_case(),
                 flag.name.to_shouty_snake_case(),
             );
