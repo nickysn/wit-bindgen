@@ -1,6 +1,6 @@
 mod component_type_object;
 
-use anyhow::Result;
+use anyhow::{Ok, Result};
 use heck::*;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -1793,19 +1793,19 @@ impl InterfaceGenerator<'_> {
         self.src.c_adapters(&c_sig.sig);
         self.src.c_adapters(";\n");
         let src_var_section_start = self.src.c_adapters.len();
-        let mut var_section = String::new();
         self.src.c_adapters("begin\n");
 
         // construct optional adapters from maybe pointers to real optional
         // structs internally
+        let mut f = FunctionBindgen::new(self, c_sig, &import_name);
         let mut optional_adapters = String::from("");
-        if !self.gen.opts.no_sig_flattening {
-            for (i, (_, param)) in c_sig.params.iter().enumerate() {
+        if !f.gen.gen.opts.no_sig_flattening {
+            for (i, (_, param)) in f.sig.params.iter().enumerate() {
                 let ty = &func.params[i].1;
                 if let Type::Id(id) = ty {
-                    if let TypeDefKind::Option(_) = &self.resolve.types[*id].kind {
-                        let ty = self.gen.type_name(ty);
-                        var_section.push_str(&format!("{param}: {ty};\n"));
+                    if let TypeDefKind::Option(_) = &f.gen.resolve.types[*id].kind {
+                        let ty = f.gen.gen.type_name(ty);
+                        f.local_vars.insert(param, &ty);
                         uwrite!(
                             optional_adapters,
                             "{param}.is_some := maybe_{param} <> nil;"
@@ -1822,7 +1822,6 @@ impl InterfaceGenerator<'_> {
             }
         }
 
-        let mut f = FunctionBindgen::new(self, c_sig, &import_name);
         for (pointer, param) in f.sig.params.iter() {
             f.locals.insert(&param).unwrap();
             if *pointer {
@@ -1846,23 +1845,25 @@ impl InterfaceGenerator<'_> {
 
         let FunctionBindgen {
             src,
+            mut local_vars,
             import_return_pointer_area_size,
             import_return_pointer_area_align,
             ..
         } = f;
 
         if import_return_pointer_area_size > 0 {
-            var_section.push_str(&format!(
-                "\
-                    //__attribute__((__aligned__({import_return_pointer_area_align})))
-                    ret_area: array[0..{import_return_pointer_area_size}-1] of uint8;
-                ",
-            ));
+            local_vars.insert("ret_area", &format!("array[0..{}] of uint8", import_return_pointer_area_size - 1));
+            //var_section.push_str(&format!(
+            //    "\
+            //        //__attribute__((__aligned__({import_return_pointer_area_align})))
+            //        ret_area: array[0..{import_return_pointer_area_size}-1] of uint8;
+            //    ",
+            //));
         }
 
         self.src.c_adapters(&String::from(src));
-        if !var_section.is_empty() {
-            self.src.c_adapters.as_mut_string().insert_str(src_var_section_start, &format!("var\n{var_section}"));
+        if !local_vars.is_empty() {
+            self.src.c_adapters.as_mut_string().insert_str(src_var_section_start, &local_vars.to_string());
         }
         self.src.c_adapters("end;\n");
     }
@@ -2208,9 +2209,42 @@ struct DroppableBorrow {
     ty: TypeId,
 }
 
+struct PascalVarList {
+    defined: HashMap<String, String>,
+}
+
+impl PascalVarList {
+    fn new() -> PascalVarList {
+        PascalVarList {
+            defined: Default::default()
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.defined.is_empty()
+    }
+
+    pub fn insert(&mut self, name: &str, typ: &str) {
+        if self.defined.insert(name.to_string(), typ.to_string()).is_some() {
+            panic!("name `{}` already defined", name);
+        }
+    }
+}
+
+impl std::fmt::Display for PascalVarList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "var")?;
+        for (name, typ) in &self.defined {
+            writeln!(f, "  {}: {};", name, typ)?;
+        }
+        std::fmt::Result::Ok(())
+    }
+}
+
 struct FunctionBindgen<'a, 'b> {
     gen: &'a mut InterfaceGenerator<'b>,
     locals: Ns,
+    local_vars: PascalVarList,
     src: wit_bindgen_core::Source,
     sig: CSig,
     func_to_call: &'a str,
@@ -2241,6 +2275,7 @@ impl<'a, 'b> FunctionBindgen<'a, 'b> {
             gen,
             sig,
             locals: Default::default(),
+            local_vars: PascalVarList::new(),
             src: Default::default(),
             func_to_call,
             block_storage: Vec::new(),
@@ -2338,7 +2373,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             self.import_return_pointer_area_size = self.import_return_pointer_area_size.max(size);
             self.import_return_pointer_area_align =
                 self.import_return_pointer_area_align.max(align);
-            uwriteln!(self.src, "uint8_t *{} = (uint8_t *) &ret_area;", ptr);
+            self.local_vars.insert(&ptr, "Puint8");
+            uwriteln!(self.src, "{} := Puint8(@ret_area);", ptr);
         } else {
             self.gen.gen.return_pointer_area_size = self.gen.gen.return_pointer_area_size.max(size);
             self.gen.gen.return_pointer_area_align =
