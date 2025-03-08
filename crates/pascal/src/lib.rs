@@ -1377,10 +1377,18 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
 
         self.src.h_defs("\n");
         self.docs(docs, SourceType::HDefs);
-        self.src.h_defs("typedef ");
+
+        uwrite!(
+            self.src.h_defs,
+            "
+            type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = ",
+            &self.gen.type_names[&id],
+        );
         self.print_ty(SourceType::HDefs, ty);
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        self.src.h_defs(";\n");
     }
 
     fn type_list(&mut self, id: TypeId, _name: &str, ty: &Type, docs: &Docs) {
