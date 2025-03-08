@@ -2152,11 +2152,11 @@ impl InterfaceGenerator<'_> {
         let ret = self.classify_ret(func, sig_flattening);
         let (is_function, ret_type_str) = match &ret.scalar {
             None | Some(Scalar::Void) => (false, String::new()),
-            Some(Scalar::OptionBool(_id)) => (true, "bool".to_string()),
+            Some(Scalar::OptionBool(_id)) => (true, "boolean".to_string()),
             Some(Scalar::ResultBool(ok, _err)) => {
                 result_rets = true;
                 result_rets_has_ok_type = ok.is_some();
-                (true, "bool".to_string())
+                (true, "boolean".to_string())
             }
             Some(Scalar::Type(ty)) => (true, self.gen.type_name(ty)),
         };
