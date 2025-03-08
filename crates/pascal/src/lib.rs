@@ -1412,7 +1412,8 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     fn anonymous_type_tuple(&mut self, id: TypeId, ty: &Tuple, _docs: &Docs) {
         uwriteln!(
             self.src.h_defs,
-            "type
+            "
+            type
               PP{0} = ^P{0};
               P{0} = ^{0};
               {0} = record",
@@ -1470,7 +1471,8 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     fn anonymous_type_list(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
         uwriteln!(
             self.src.h_defs,
-            "type
+            "
+            type
               PP{0} = ^P{0};
               P{0} = ^{0};
               {0} = record",
