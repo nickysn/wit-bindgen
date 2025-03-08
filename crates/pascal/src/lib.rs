@@ -572,7 +572,7 @@ impl Pascal {
 
     fn push_type_name(&mut self, ty: &Type, dst: &mut String) {
         match ty {
-            Type::Bool => dst.push_str("bool"),
+            Type::Bool => dst.push_str("boolean"),
             Type::Char => dst.push_str("uint32"), // TODO: better type?
             Type::U8 => dst.push_str("byte"),
             Type::S8 => dst.push_str("int8"),
