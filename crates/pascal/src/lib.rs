@@ -1426,14 +1426,19 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     }
 
     fn anonymous_type_option(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
-        self.src.h_defs("\ntypedef ");
-        self.src.h_defs("struct {\n");
-        self.src.h_defs("bool is_some;\n");
         let ty = self.gen.type_name(ty);
-        uwriteln!(self.src.h_defs, "{ty} val;");
-        self.src.h_defs("}");
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        uwriteln!(
+            self.src.h_defs,
+            "
+            type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = record
+                is_some: Boolean;
+                val: {ty};
+              end;",
+            &self.gen.type_names[&id]
+        );
     }
 
     fn anonymous_type_result(&mut self, id: TypeId, ty: &Result_, _docs: &Docs) {
