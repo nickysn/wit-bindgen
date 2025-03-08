@@ -2982,8 +2982,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let list_name = self.gen.gen.type_name(&Type::Id(*ty));
                 let elem_name = self.gen.gen.type_name(element);
                 results.push(format!(
-                    "({}) {{ ({}*)({}), ({}) }}",
-                    list_name, elem_name, operands[0], operands[1]
+                    "{}_create( P{}({}), {} )",
+                    list_name.strip_suffix("_t").unwrap(), elem_name, operands[0], operands[1]
                 ));
             }
             Instruction::IterElem { .. } => results.push("e".to_string()),
