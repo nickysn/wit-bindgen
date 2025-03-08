@@ -2209,7 +2209,7 @@ impl InterfaceGenerator<'_> {
         let single_ret = ret.retptrs.len() == 1;
         for (i, ty) in ret.retptrs.iter().enumerate() {
             if i > 0 || func.params.len() > 0 {
-                self.src.h_fns(", ");
+                self.src.h_fns("; ");
             }
             let name: String = if result_rets {
                 assert!(i <= 1);
