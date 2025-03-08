@@ -1265,12 +1265,6 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
     }
 
     fn type_variant(&mut self, id: TypeId, name: &str, variant: &Variant, docs: &Docs) {
-        self.src.h_defs("\n");
-        self.docs(docs, SourceType::HDefs);
-        self.start_typedef_struct(id);
-        self.src.h_defs(int_repr(variant.tag()));
-        self.src.h_defs(" tag;\n");
-
         let cases_with_data = Vec::from_iter(
             variant
                 .cases
@@ -1278,30 +1272,45 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
                 .filter_map(|case| case.ty.as_ref().map(|ty| (&case.name, ty))),
         );
 
-        if !cases_with_data.is_empty() {
-            self.src.h_defs("union {\n");
-            for (name, ty) in cases_with_data {
-                self.print_ty(SourceType::HDefs, ty);
-                self.src.h_defs(" ");
-                self.src.h_defs(&to_c_ident(name));
-                self.src.h_defs(";\n");
-            }
-            self.src.h_defs("} val;\n");
-        }
-        self.finish_typedef_struct(id);
+        self.src.h_defs("\n");
 
-        if variant.cases.len() > 0 {
-            self.src.h_defs("\n");
-        }
         let ns = self.owner_namespace(id).to_shouty_snake_case();
         for (i, case) in variant.cases.iter().enumerate() {
             self.docs(&case.docs, SourceType::HDefs);
             uwriteln!(
                 self.src.h_defs,
-                "#define {ns}_{}_{} {i}",
+                "const {ns}_{}_{} = {i};",
                 name.to_shouty_snake_case(),
                 case.name.to_shouty_snake_case(),
             );
+        }
+
+        self.docs(docs, SourceType::HDefs);
+        self.start_typedef_struct(id);
+        if !cases_with_data.is_empty() {
+            self.src.h_defs("case ");
+        }
+        self.src.h_defs("tag: ");
+        self.src.h_defs(int_repr(variant.tag()));
+        if !cases_with_data.is_empty() {
+            self.src.h_defs(" of\n");
+        } else {
+            self.src.h_defs(";\n");
+        }
+
+        if !cases_with_data.is_empty() {
+            for (case_name, ty) in cases_with_data {
+                self.src.h_defs(&format!("{ns}_{}_{}: (", name.to_shouty_snake_case(), case_name.to_shouty_snake_case()));
+                self.src.h_defs(&to_c_ident(case_name));
+                self.src.h_defs(": ");
+                self.print_ty(SourceType::HDefs, ty);
+                self.src.h_defs(");\n");
+            }
+        }
+        self.finish_typedef_struct(id);
+
+        if variant.cases.len() > 0 {
+            self.src.h_defs("\n");
         }
     }
 
