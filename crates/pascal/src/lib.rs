@@ -1607,11 +1607,13 @@ impl InterfaceGenerator<'_> {
                     params.push_str(&format!("const a{}: {}; ", field.name, self.gen.type_name(&field.ty)));
                 }
                 params = params.strip_suffix("; ").unwrap().to_string();
-                let func_sig = format!("function {prefix}_create({params}): {name};");
+                let function_name = format!("{prefix}_create");
+                let result_var_name = function_name.clone();
+                let func_sig = format!("function {function_name}({params}): {name};");
                 self.src.h_helpers(&format!("{func_sig}\n"));
                 self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
                 for field in r.fields.iter() {
-                    self.src.c_helpers(&format!("result.{0} := a{0};\n", field.name));
+                    self.src.c_helpers(&format!("{result_var_name}.{0} := a{0};\n", field.name));
                 }
                 self.src.c_helpers(&format!("end;\n"));
             }
@@ -1624,13 +1626,15 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::List(t) => {
                 let t_name = self.gen.type_name(t);
-                let func_sig = format!("function {prefix}_create(ptr: P{t_name}; len: SizeUInt): {name};");
+                let function_name = format!("{prefix}_create");
+                let result_var_name = function_name.clone();
+                let func_sig = format!("function {function_name}(ptr: P{t_name}; len: SizeUInt): {name};");
                 self.src.h_helpers(&format!("{func_sig}\n"));
                 self.src.c_helpers(&format!(
                     "{func_sig}
                     begin
-                      result.ptr := ptr;
-                      result.len := len;
+                      {result_var_name}.ptr := ptr;
+                      {result_var_name}.len := len;
                     end;"));
             }
 
