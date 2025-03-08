@@ -2487,7 +2487,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             self.gen.gen.return_pointer_area_align =
                 self.gen.gen.return_pointer_area_align.max(align);
             // Declare a statically-allocated return area.
-            uwriteln!(self.src, "uint8_t *{} = (uint8_t *) &STATIC_RET_AREA;", ptr);
+            self.local_vars.insert(&ptr, "Pbyte");
+            uwriteln!(self.src, "{} := Pbyte(@STATIC_RET_AREA);", ptr);
         }
 
         ptr
