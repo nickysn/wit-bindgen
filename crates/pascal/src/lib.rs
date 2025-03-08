@@ -1577,8 +1577,118 @@ impl InterfaceGenerator<'_> {
                 }
             }
 
+            self.define_constructor(ty);
             self.define_dtor(ty);
         }
+    }
+
+    fn define_constructor(&mut self, id: TypeId) {
+        //let h_helpers_start = self.src.h_helpers.len();
+        //let c_helpers_start = self.src.c_helpers.len();
+
+        let name = self.gen.type_names[&id].clone();
+        let prefix = name.strip_suffix("_t").unwrap();
+
+        //self.src
+        //    .h_helpers(&format!("\nprocedure {prefix}_create(ptr: P{name});\n"));
+        //self.src
+        //    .c_helpers(&format!("\nprocedure {prefix}_create(ptr: P{name});\n"));
+        //self.src.c_helpers("begin\n");
+        //let c_helpers_body_start = self.src.c_helpers.len();
+        match &self.resolve.types[id].kind {
+            TypeDefKind::Type(t) => {}//self.free(t, "ptr"),
+
+            TypeDefKind::Flags(_) => {}
+            TypeDefKind::Enum(_) => {}
+
+            TypeDefKind::Record(r) => {
+                let mut params = String::new();
+                for field in r.fields.iter() {
+                    params.push_str(&format!("const a{}: {}; ", field.name, self.gen.type_name(&field.ty)));
+                }
+                params = params.strip_suffix("; ").unwrap().to_string();
+                let func_sig = format!("function {prefix}_create({params}): {name};");
+                self.src.h_helpers(&format!("{func_sig}\n"));
+                self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
+                for field in r.fields.iter() {
+                    self.src.c_helpers(&format!("result.{0} := a{0};\n", field.name));
+                }
+                self.src.c_helpers(&format!("end;\n"));
+            }
+
+            TypeDefKind::Tuple(t) => {
+                //for (i, ty) in t.types.iter().enumerate() {
+                //    self.free(ty, &format!("&ptr->f{i}"));
+                //}
+            }
+
+            TypeDefKind::List(t) => {
+                //self.src.c_helpers("  list_len := ptr^.len;\n");
+                //uwriteln!(self.src.c_helpers, "  if list_len > 0 then\n  begin");
+                //let mut t_name = String::new();
+                //self.gen.push_type_name(t, &mut t_name);
+                //var_section = format!("var
+                //  i: SizeUInt;
+                //  list_len: SizeUInt;
+                //  list_ptr: P{t_name};\n");
+                //self.src
+                //    .c_helpers("list_ptr := ptr^.ptr;\n");
+                //self.src
+                //    .c_helpers("for i := 0 to list_len - 1 do\nbegin\n");
+                //self.free(t, &format!("@list_ptr[i]"));
+                //self.src.c_helpers("end;\n");
+                //uwriteln!(self.src.c_helpers, "    FreeMem(list_ptr);");
+                //uwriteln!(self.src.c_helpers, "  end;");
+            }
+
+            TypeDefKind::Variant(v) => {
+                //self.src.c_helpers("switch ((int32_t) ptr->tag) {\n");
+                //for (i, case) in v.cases.iter().enumerate() {
+                //    if let Some(ty) = &case.ty {
+                //        uwriteln!(self.src.c_helpers, "case {}: {{", i);
+                //        let expr = format!("&ptr->val.{}", to_c_ident(&case.name));
+                //        self.free(ty, &expr);
+                //        self.src.c_helpers("break;\n");
+                //        self.src.c_helpers("}\n");
+                //    }
+                //}
+                //self.src.c_helpers("}\n");
+            }
+
+            TypeDefKind::Option(t) => {
+                //self.src.c_helpers("if (ptr->is_some) {\n");
+                //self.free(t, "&ptr->val");
+                //self.src.c_helpers("}\n");
+            }
+
+            TypeDefKind::Result(r) => {
+                //self.src.c_helpers("if (!ptr->is_err) {\n");
+                //if let Some(ok) = &r.ok {
+                //    self.free(ok, "&ptr->val.ok");
+                //}
+                //if let Some(err) = &r.err {
+                //    self.src.c_helpers("} else {\n");
+                //    self.free(err, "&ptr->val.err");
+                //}
+                //self.src.c_helpers("}\n");
+            }
+            TypeDefKind::Future(_) => todo!("print_constructor for future"),
+            TypeDefKind::Stream(_) => todo!("print_constructor for stream"),
+            TypeDefKind::ErrorContext => todo!("print_constructor for error-context"),
+            TypeDefKind::Resource => {}
+            TypeDefKind::Handle(Handle::Borrow(id) | Handle::Own(id)) => {
+                //self.free(&Type::Id(*id), "*ptr");
+            }
+            TypeDefKind::Unknown => unreachable!(),
+        }
+        ////self.src.c_helpers.as_mut_string().insert_str(c_helpers_var_section_start, &var_section);
+        //if c_helpers_body_start == self.src.c_helpers.len() {
+        //    self.src.c_helpers.as_mut_string().truncate(c_helpers_start);
+        //    self.src.h_helpers.as_mut_string().truncate(h_helpers_start);
+        //    return;
+        //}
+        //self.src.c_helpers("end;\n");
+        ////self.gen.dtor_funcs.insert(id, format!("{prefix}_free"));
     }
 
     fn define_dtor(&mut self, id: TypeId) {
