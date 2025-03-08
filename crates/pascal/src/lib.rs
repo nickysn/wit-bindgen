@@ -3531,6 +3531,7 @@ pub fn to_c_ident(name: &str) -> String {
         "friend" => "friend_".into(),
         "goto" => "goto_".into(),
         "if" => "if_".into(),
+        "in" => "in_".into(),
         "inline" => "inline_".into(),
         "int" => "int_".into(),
         "long" => "long_".into(),
