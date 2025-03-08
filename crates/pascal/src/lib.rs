@@ -2573,7 +2573,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::RecordLift { ty, record, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("{}_create(\n", name);
+                let mut result = format!("{}_create(\n", name.strip_suffix("_t").unwrap());
                 for (field, op) in record.fields.iter().zip(operands.iter()) {
                     let field_ty = self.gen.gen.type_name(&field.ty);
                     uwriteln!(result, "{}({}),", field_ty, op);
@@ -2594,12 +2594,16 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::TupleLift { ty, tuple, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("({}) {{\n", name);
+                let mut result = format!("{}_create(\n", name.strip_suffix("_t").unwrap());
                 for (ty, op) in tuple.types.iter().zip(operands.iter()) {
                     let ty = self.gen.gen.type_name(&ty);
-                    uwriteln!(result, "({}) {},", ty, op);
+                    uwriteln!(result, "{}({}),", ty, op);
                 }
-                result.push_str("}");
+                if result.ends_with(",\n") {
+                    result.pop();
+                    result.pop();
+                }
+                result.push_str(")");
                 results.push(result);
             }
 
