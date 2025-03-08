@@ -1042,7 +1042,7 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
         self.start_typedef_struct(id);
         for field in record.fields.iter() {
             self.docs(&field.docs, SourceType::HDefs);
-            self.src.h_defs(&to_c_ident(&field.name));
+            self.src.h_defs(&to_pascal_ident(&field.name));
             self.src.h_defs(": ");
             self.print_ty(SourceType::HDefs, &field.ty);
             self.src.h_defs(";\n");
@@ -1308,7 +1308,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         if !cases_with_data.is_empty() {
             for (case_name, ty) in cases_with_data {
                 self.src.h_defs(&format!("{ns}_{}_{}: (", name.to_shouty_snake_case(), case_name.to_shouty_snake_case()));
-                self.src.h_defs(&to_c_ident(case_name));
+                self.src.h_defs(&to_pascal_ident(case_name));
                 self.src.h_defs(": ");
                 self.print_ty(SourceType::HDefs, ty);
                 self.src.h_defs(");\n");
@@ -1775,7 +1775,7 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::Record(r) => {
                 for field in r.fields.iter() {
-                    self.free(&field.ty, &format!("@(ptr^.{})", to_c_ident(&field.name)));
+                    self.free(&field.ty, &format!("@(ptr^.{})", to_pascal_ident(&field.name)));
                 }
             }
 
@@ -1809,7 +1809,7 @@ impl InterfaceGenerator<'_> {
                 for (i, case) in v.cases.iter().enumerate() {
                     if let Some(ty) = &case.ty {
                         uwriteln!(self.src.c_helpers, "case {}: {{", i);
-                        let expr = format!("&ptr->val.{}", to_c_ident(&case.name));
+                        let expr = format!("&ptr->val.{}", to_pascal_ident(&case.name));
                         self.free(ty, &expr);
                         self.src.c_helpers("break;\n");
                         self.src.c_helpers("}\n");
@@ -2190,12 +2190,12 @@ impl InterfaceGenerator<'_> {
             };
             let (print_ty, print_name) = if sig_flattening {
                 if let Some(option_ty) = optional_type {
-                    (option_ty, format!("maybe_{}", to_c_ident(name)))
+                    (option_ty, format!("maybe_{}", to_pascal_ident(name)))
                 } else {
-                    (ty, to_c_ident(name))
+                    (ty, to_pascal_ident(name))
                 }
             } else {
-                (ty, to_c_ident(name))
+                (ty, to_pascal_ident(name))
             };
             self.src.h_fns(&print_name);
             self.src.h_fns(": ");
@@ -2203,7 +2203,7 @@ impl InterfaceGenerator<'_> {
                 self.src.h_fns("P");
             }
             self.print_ty(SourceType::HFns, print_ty);
-            params.push((optional_type.is_none() && pointer, to_c_ident(name)));
+            params.push((optional_type.is_none() && pointer, to_pascal_ident(name)));
         }
         let mut retptrs = Vec::new();
         let single_ret = ret.retptrs.len() == 1;
@@ -2630,7 +2630,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             Instruction::RecordLower { record, .. } => {
                 let op = &operands[0];
                 for f in record.fields.iter() {
-                    results.push(format!("({}).{}", op, to_c_ident(&f.name)));
+                    results.push(format!("({}).{}", op, to_pascal_ident(&f.name)));
                 }
             }
             Instruction::RecordLift { ty, record, .. } => {
@@ -2785,7 +2785,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                             operands[0],
                         );
                         self.src.push_str(".");
-                        self.src.push_str(&to_c_ident(&case.name));
+                        self.src.push_str(&to_pascal_ident(&case.name));
                         self.src.push_str(";\n");
                     }
                     self.src.push_str(&block);
@@ -2819,7 +2819,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     if let Some(_) = case.ty.as_ref() {
                         let mut dst = format!("{}.val", result);
                         dst.push_str(".");
-                        dst.push_str(&to_c_ident(&case.name));
+                        dst.push_str(&to_pascal_ident(&case.name));
                         self.store_op(&block_results[0], &dst);
                     }
                     self.src.push_str("break;\n}\n");
@@ -3479,7 +3479,7 @@ pub fn is_arg_by_pointer(resolve: &Resolve, ty: &Type) -> bool {
     }
 }
 
-pub fn to_c_ident(name: &str) -> String {
+pub fn to_pascal_ident(name: &str) -> String {
     match name {
         // Escape Pascal keywords.
         "and" => "and_".into(),
