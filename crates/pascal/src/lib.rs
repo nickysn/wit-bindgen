@@ -1443,29 +1443,31 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     }
 
     fn anonymous_type_result(&mut self, id: TypeId, ty: &Result_, _docs: &Docs) {
-        self.src.h_defs("\ntypedef ");
-        self.src.h_defs(
-            "struct {
-                bool is_err;
-            ",
+        uwriteln!(
+            self.src.h_defs,
+            "
+            type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = record",
+            &self.gen.type_names[&id]
         );
         let ok_ty = ty.ok.as_ref();
         let err_ty = ty.err.as_ref();
         if ok_ty.is_some() || err_ty.is_some() {
-            self.src.h_defs("union {\n");
+            self.src.h_defs("case is_err: Boolean of\n");
             if let Some(ok) = ok_ty {
                 let ty = self.gen.type_name(ok);
-                uwriteln!(self.src.h_defs, "{ty} ok;");
+                uwriteln!(self.src.h_defs, "false: (ok: {ty});");
             }
             if let Some(err) = err_ty {
                 let ty = self.gen.type_name(err);
-                uwriteln!(self.src.h_defs, "{ty} err;");
+                uwriteln!(self.src.h_defs, "true: (err: {ty});");
             }
-            self.src.h_defs("} val;\n");
+        } else {
+            self.src.h_defs("is_err: Boolean;\n");
         }
-        self.src.h_defs("}");
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        self.src.h_defs("end;");
     }
 
     fn anonymous_type_list(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
