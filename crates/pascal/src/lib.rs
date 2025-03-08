@@ -1410,15 +1410,19 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     }
 
     fn anonymous_type_tuple(&mut self, id: TypeId, ty: &Tuple, _docs: &Docs) {
-        self.src.h_defs("\ntypedef ");
-        self.src.h_defs("struct {\n");
+        uwriteln!(
+            self.src.h_defs,
+            "type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = record",
+            &self.gen.type_names[&id]
+        );
         for (i, t) in ty.types.iter().enumerate() {
             let ty = self.gen.type_name(t);
-            uwriteln!(self.src.h_defs, "{ty} f{i};");
+            uwriteln!(self.src.h_defs, "f{i}: {ty};");
         }
-        self.src.h_defs("}");
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        self.src.h_defs("end;\n");
     }
 
     fn anonymous_type_option(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
