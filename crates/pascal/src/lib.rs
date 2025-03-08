@@ -2463,12 +2463,16 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::RecordLift { ty, record, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("({}) {{\n", name);
+                let mut result = format!("{}_create(\n", name);
                 for (field, op) in record.fields.iter().zip(operands.iter()) {
                     let field_ty = self.gen.gen.type_name(&field.ty);
-                    uwriteln!(result, "({}) {},", field_ty, op);
+                    uwriteln!(result, "{}({}),", field_ty, op);
                 }
-                result.push_str("}");
+                if result.ends_with(",\n") {
+                    result.pop();
+                    result.pop();
+                }
+                result.push_str(")");
                 results.push(result);
             }
 
