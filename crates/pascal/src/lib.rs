@@ -475,7 +475,7 @@ impl WorldGenerator for Pascal {
                 c_str,
                 "
                 __attribute__((__aligned__({})))
-                static uint8_t RET_AREA[{}];
+                static uint8_t STATIC_RET_AREA[{}];
                 ",
                 self.return_pointer_area_align,
                 self.return_pointer_area_size,
@@ -2487,7 +2487,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             self.gen.gen.return_pointer_area_align =
                 self.gen.gen.return_pointer_area_align.max(align);
             // Declare a statically-allocated return area.
-            uwriteln!(self.src, "uint8_t *{} = (uint8_t *) &RET_AREA;", ptr);
+            uwriteln!(self.src, "uint8_t *{} = (uint8_t *) &STATIC_RET_AREA;", ptr);
         }
 
         ptr
