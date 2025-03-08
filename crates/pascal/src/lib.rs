@@ -1348,8 +1348,14 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         uwrite!(self.src.h_defs, "\n");
         self.docs(docs, SourceType::HDefs);
         let int_t = int_repr(enum_.tag());
-        uwrite!(self.src.h_defs, "typedef {int_t} ");
-        self.print_typedef_target(id);
+        uwriteln!(
+            self.src.h_defs,
+            "type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = {int_t};",
+            &self.gen.type_names[&id],
+        );
 
         if enum_.cases.len() > 0 {
             self.src.h_defs("\n");
@@ -1359,7 +1365,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
             self.docs(&case.docs, SourceType::HDefs);
             uwriteln!(
                 self.src.h_defs,
-                "#define {ns}_{}_{} {i}",
+                "const {ns}_{}_{} = {i};",
                 name.to_shouty_snake_case(),
                 case.name.to_shouty_snake_case(),
             );
