@@ -574,7 +574,7 @@ impl Pascal {
         match ty {
             Type::Bool => dst.push_str("bool"),
             Type::Char => dst.push_str("uint32"), // TODO: better type?
-            Type::U8 => dst.push_str("uint8"),
+            Type::U8 => dst.push_str("byte"),
             Type::S8 => dst.push_str("int8"),
             Type::U16 => dst.push_str("uint16"),
             Type::S16 => dst.push_str("int16"),
@@ -1959,11 +1959,11 @@ impl InterfaceGenerator<'_> {
         } = f;
 
         if import_return_pointer_area_size > 0 {
-            local_vars.insert("ret_area", &format!("array[0..{}] of uint8", import_return_pointer_area_size - 1));
+            local_vars.insert("ret_area", &format!("array[0..{}] of byte", import_return_pointer_area_size - 1));
             //var_section.push_str(&format!(
             //    "\
             //        //__attribute__((__aligned__({import_return_pointer_area_align})))
-            //        ret_area: array[0..{import_return_pointer_area_size}-1] of uint8;
+            //        ret_area: array[0..{import_return_pointer_area_size}-1] of byte;
             //    ",
             //));
         }
@@ -2480,8 +2480,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             self.import_return_pointer_area_size = self.import_return_pointer_area_size.max(size);
             self.import_return_pointer_area_align =
                 self.import_return_pointer_area_align.max(align);
-            self.local_vars.insert(&ptr, "Puint8");
-            uwriteln!(self.src, "{} := Puint8(@ret_area);", ptr);
+            self.local_vars.insert(&ptr, "Pbyte");
+            uwriteln!(self.src, "{} := Pbyte(@ret_area);", ptr);
         } else {
             self.gen.gen.return_pointer_area_size = self.gen.gen.return_pointer_area_size.max(size);
             self.gen.gen.return_pointer_area_align =
@@ -2514,7 +2514,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
 
             // TODO: checked?
-            Instruction::U8FromI32 => results.push(format!("uint8({})", operands[0])),
+            Instruction::U8FromI32 => results.push(format!("byte({})", operands[0])),
             Instruction::S8FromI32 => results.push(format!("int8({})", operands[0])),
             Instruction::U16FromI32 => results.push(format!("uint16({})", operands[0])),
             Instruction::S16FromI32 => results.push(format!("int16({})", operands[0])),
@@ -2942,7 +2942,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             Instruction::EnumLift { .. } => results.push(operands.pop().unwrap()),
 
             Instruction::ListCanonLower { .. } | Instruction::StringLower { .. } => {
-                results.push(format!("Puint8(({}).ptr)", operands[0]));
+                results.push(format!("Pbyte(({}).ptr)", operands[0]));
                 results.push(format!("({}).len", operands[0]));
             }
             Instruction::ListCanonLift { element, ty, .. } => {
@@ -2968,7 +2968,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
             Instruction::ListLower { .. } => {
                 let _body = self.blocks.pop().unwrap();
-                results.push(format!("Puint8(({}).ptr)", operands[0]));
+                results.push(format!("Pbyte(({}).ptr)", operands[0]));
                 results.push(format!("({}).len", operands[0]));
             }
 
@@ -3226,7 +3226,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             Instruction::F32Load { offset } => self.load("single", *offset, operands, results),
             Instruction::F64Load { offset } => self.load("double", *offset, operands, results),
             Instruction::PointerLoad { offset } => {
-                self.load("Puint8", *offset, operands, results)
+                self.load("Pbyte", *offset, operands, results)
             }
             Instruction::LengthLoad { offset } => self.load("SizeUInt", *offset, operands, results),
             Instruction::I32Store { offset } => self.store("int32", *offset, operands),
@@ -3239,7 +3239,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             Instruction::LengthStore { offset } => self.store("SizeUInt", *offset, operands),
 
             Instruction::I32Load8U { offset } => {
-                self.load_ext("uint8", *offset, operands, results)
+                self.load_ext("byte", *offset, operands, results)
             }
             Instruction::I32Load8S { offset } => {
                 self.load_ext("int8", *offset, operands, results)
@@ -3367,7 +3367,7 @@ fn wasm_type(ty: WasmType) -> &'static str {
         WasmType::I64 => "int64",
         WasmType::F32 => "single",
         WasmType::F64 => "double",
-        WasmType::Pointer => "Puint8",
+        WasmType::Pointer => "Pbyte",
         WasmType::PointerOrI64 => "int64",
         WasmType::Length => "SizeUInt",
     }
@@ -3375,7 +3375,7 @@ fn wasm_type(ty: WasmType) -> &'static str {
 
 pub fn int_repr(ty: Int) -> &'static str {
     match ty {
-        Int::U8 => "uint8",
+        Int::U8 => "byte",
         Int::U16 => "uint16",
         Int::U32 => "uint32",
         Int::U64 => "uint64",
