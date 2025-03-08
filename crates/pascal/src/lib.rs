@@ -1623,22 +1623,15 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::List(t) => {
-                //self.src.c_helpers("  list_len := ptr^.len;\n");
-                //uwriteln!(self.src.c_helpers, "  if list_len > 0 then\n  begin");
-                //let mut t_name = String::new();
-                //self.gen.push_type_name(t, &mut t_name);
-                //var_section = format!("var
-                //  i: SizeUInt;
-                //  list_len: SizeUInt;
-                //  list_ptr: P{t_name};\n");
-                //self.src
-                //    .c_helpers("list_ptr := ptr^.ptr;\n");
-                //self.src
-                //    .c_helpers("for i := 0 to list_len - 1 do\nbegin\n");
-                //self.free(t, &format!("@list_ptr[i]"));
-                //self.src.c_helpers("end;\n");
-                //uwriteln!(self.src.c_helpers, "    FreeMem(list_ptr);");
-                //uwriteln!(self.src.c_helpers, "  end;");
+                let t_name = self.gen.type_name(t);
+                let func_sig = format!("function {prefix}_create(ptr: P{t_name}; len: SizeUInt): {name};");
+                self.src.h_helpers(&format!("{func_sig}\n"));
+                self.src.c_helpers(&format!(
+                    "{func_sig}
+                    begin
+                      result.ptr := ptr;
+                      result.len := len;
+                    end;"));
             }
 
             TypeDefKind::Variant(v) => {
