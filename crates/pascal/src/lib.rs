@@ -3566,6 +3566,7 @@ pub fn to_c_ident(name: &str) -> String {
         "throw" => "throw_".into(),
         "true" => "true_".into(),
         "try" => "try_".into(),
+        "type" => "type_".into(),
         "typedef" => "typedef_".into(),
         "typeid" => "typeid_".into(),
         "typename" => "typename_".into(),
