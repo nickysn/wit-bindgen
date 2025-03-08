@@ -1396,7 +1396,15 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     }
 
     fn anonymous_type_handle(&mut self, id: TypeId, handle: &Handle, _docs: &Docs) {
-        self.src.h_defs("\ntypedef ");
+        uwrite!(
+            self.src.h_defs,
+            "
+            type
+              PP{0} = ^P{0};
+              P{0} = ^{0};
+              {0} = ",
+            &self.gen.type_names[&id]
+        );
         let resource = match handle {
             Handle::Borrow(id) | Handle::Own(id) => id,
         };
@@ -1405,8 +1413,7 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             Handle::Borrow(_) => self.src.h_defs(&info.borrow),
             Handle::Own(_) => self.src.h_defs(&info.own),
         }
-        self.src.h_defs(" ");
-        self.print_typedef_target(id);
+        self.src.h_defs(";");
     }
 
     fn anonymous_type_tuple(&mut self, id: TypeId, ty: &Tuple, _docs: &Docs) {
