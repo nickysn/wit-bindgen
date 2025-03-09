@@ -447,13 +447,13 @@ impl WorldGenerator for Pascal {
             uwriteln!(
                 h_str,
                 "
-                type
-                  PP{snake}_string_t = ^P{snake}_string_t;
-                  P{snake}_string_t = ^{snake}_string_t;
-                  {snake}_string_t = record\n\
-                  ptr: P{ty};\n\
-                  len: SizeUInt;\n\
-                end;",
+                type\n\
+                \x20 PP{snake}_string_t = ^P{snake}_string_t;\n\
+                \x20 P{snake}_string_t = ^{snake}_string_t;\n\
+                \x20 {snake}_string_t = record\n\
+                \x20   ptr: P{ty};\n\
+                \x20   len: SizeUInt;\n\
+                \x20 end;",
                 ty = self.char_type(),
             );
         }
