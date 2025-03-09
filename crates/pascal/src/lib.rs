@@ -3309,7 +3309,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 assert!(*amt <= 1);
                 if *amt == 1 {
-                    uwriteln!(self.src, "return {};", operands[0]);
+                    uwriteln!(self.src, "exit({});", operands[0]);
                 }
             }
 
