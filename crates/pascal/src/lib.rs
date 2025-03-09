@@ -293,12 +293,12 @@ impl WorldGenerator for Pascal {
         uwrite!(
             self.src.c_adapters,
             "
-               procedure {linking_symbol}; external;
-               procedure {linking_symbol}_public_use_in_this_compilation_unit;
-               begin
-                 {linking_symbol};
-               end;
-           ",
+procedure {linking_symbol}; external;
+procedure {linking_symbol}_public_use_in_this_compilation_unit;
+begin
+  {linking_symbol};
+end;
+",
         );
 
         self.print_intrinsics();
