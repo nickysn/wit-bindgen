@@ -1850,7 +1850,9 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::Option(t) => {
                 self.src.c_helpers("if ptr^.is_some then\nbegin\n");
+                self.src.c_helpers.indent(1);
                 self.free(t, "@(ptr^.val)");
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers("end;\n");
             }
 
