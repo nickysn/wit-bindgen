@@ -2633,8 +2633,12 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 }
             }
 
-            Instruction::BoolFromI32 | Instruction::I32FromBool => {
-                results.push(operands[0].clone());
+            Instruction::BoolFromI32 => {
+                results.push(format!("(({}) <> 0)", operands[0]));
+            }
+
+            Instruction::I32FromBool => {
+                results.push(format!("int32(ord({}))", operands[0]));
             }
 
             Instruction::RecordLower { record, .. } => {
