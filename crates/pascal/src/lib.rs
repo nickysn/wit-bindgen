@@ -1821,9 +1821,9 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::Option(t) => {
-                self.src.c_helpers("if (ptr->is_some) {\n");
-                self.free(t, "&ptr->val");
-                self.src.c_helpers("}\n");
+                self.src.c_helpers("if ptr^.is_some then\nbegin\n");
+                self.free(t, "@(ptr^.val)");
+                self.src.c_helpers("end;\n");
             }
 
             TypeDefKind::Result(r) => {
