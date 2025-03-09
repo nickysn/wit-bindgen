@@ -492,10 +492,10 @@ impl WorldGenerator for Pascal {
 
         uwriteln!(
             h_str,
-            "
-            //#ifdef __cplusplus
-            //}}
-            //#endif
+            "\n\
+            //#ifdef __cplusplus\n\
+            //}}\n\
+            //#endif\n\
             {{$endif}}"
         );
 
