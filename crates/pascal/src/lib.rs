@@ -506,12 +506,12 @@ impl WorldGenerator for Pascal {
         source::generated_preamble(&mut unit_str, version);
         uwriteln!(
             unit_str,
-            "unit {snake};
-              {{$PACKRECORDS C}}
-            interface
-              {{$I {snake}h.inc}}
-            implementation
-              {{$I {snake}.inc}}
+            "unit {snake};\n\
+            \x20 {{$PACKRECORDS C}}\n\
+            interface\n\
+            \x20 {{$I {snake}h.inc}}\n\
+            implementation\n\
+            \x20 {{$I {snake}.inc}}\n\
             end.");
 
         files.push(&format!("{snake}.pas"), unit_str.as_bytes());
