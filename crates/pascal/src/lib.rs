@@ -410,9 +410,9 @@ impl WorldGenerator for Pascal {
             );
         }
         let version = env!("CARGO_PKG_VERSION");
-        let mut h_str = wit_bindgen_core::Source::default();
+        let mut h_str = source::Source::default();
 
-        wit_bindgen_core::generated_preamble(&mut h_str, version);
+        source::generated_preamble(&mut h_str, version);
 
         uwrite!(
             h_str,
@@ -434,8 +434,8 @@ impl WorldGenerator for Pascal {
             uwriteln!(h_str, "//#include {include}");
         }
 
-        let mut c_str = wit_bindgen_core::Source::default();
-        wit_bindgen_core::generated_preamble(&mut c_str, version);
+        let mut c_str = source::Source::default();
+        source::generated_preamble(&mut c_str, version);
         uwriteln!(c_str, "//#include \"{snake}.h\"");
         for include in self.c_includes.iter() {
             uwriteln!(c_str, "//#include {include}");
@@ -502,8 +502,8 @@ impl WorldGenerator for Pascal {
             {{$endif}}"
         );
 
-        let mut unit_str = wit_bindgen_core::Source::default();
-        wit_bindgen_core::generated_preamble(&mut unit_str, version);
+        let mut unit_str = source::Source::default();
+        source::generated_preamble(&mut unit_str, version);
         uwriteln!(
             unit_str,
             "unit {snake};
@@ -2442,10 +2442,10 @@ struct FunctionBindgen<'a, 'b> {
     gen: &'a mut InterfaceGenerator<'b>,
     locals: Ns,
     local_vars: PascalVarList,
-    src: wit_bindgen_core::Source,
+    src: source::Source,
     sig: CSig,
     func_to_call: &'a str,
-    block_storage: Vec<wit_bindgen_core::Source>,
+    block_storage: Vec<source::Source>,
     blocks: Vec<(String, Vec<String>)>,
     payloads: Vec<String>,
     params: Vec<String>,
@@ -2459,7 +2459,7 @@ struct FunctionBindgen<'a, 'b> {
     borrows: Vec<DroppableBorrow>,
 
     /// Forward declarations for temporary storage of borrow copies.
-    borrow_decls: wit_bindgen_core::Source,
+    borrow_decls: source::Source,
 }
 
 impl<'a, 'b> FunctionBindgen<'a, 'b> {
