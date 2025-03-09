@@ -1694,6 +1694,21 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::Tuple(t) => {
+                let mut params = String::new();
+                for (i, ty) in t.types.iter().enumerate() {
+                    params.push_str(&format!("const a{i}: {}; ", self.gen.type_name(&ty)));
+                }
+                params = params.strip_suffix("; ").unwrap().to_string();
+                let function_name = format!("{prefix}_create");
+                let result_var_name = function_name.clone();
+                let func_sig = format!("function {function_name}({params}): {name};");
+                self.src.h_helpers(&format!("{func_sig}\n"));
+                self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
+                for (i, _ty) in t.types.iter().enumerate() {
+                    self.src.c_helpers(&format!("{result_var_name}.f{i} := a{i};\n"));
+                }
+                self.src.c_helpers(&format!("end;\n"));
+
                 //for (i, ty) in t.types.iter().enumerate() {
                 //    self.free(ty, &format!("&ptr->f{i}"));
                 //}
