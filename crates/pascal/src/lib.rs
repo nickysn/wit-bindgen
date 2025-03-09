@@ -2707,7 +2707,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 _ => {
                     let op = &operands[0];
                     let name = self.gen.gen.type_name(&Type::Id(*ty));
-                    results.push(format!("({name}) {{ {op} }}"));
+                    results.push(format!("{name}({op})"));
 
                     if let Handle::Borrow(id) = handle {
                         if !self.gen.in_import && self.gen.autodrop_enabled() {
