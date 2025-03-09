@@ -1967,13 +1967,11 @@ impl InterfaceGenerator<'_> {
             },
             _ => unimplemented!("multi-value return not supported"),
         }
-        self.src.c_fns(";\n");
+        self.src.c_fns("; ");
 
         // Print the public facing signature into the header, and since that's
         // what we are defining also print it into the C file.
-        //self.src.h_fns("extern ");
         let c_sig = self.print_sig(interface_name, func, !self.gen.opts.no_sig_flattening);
-        //self.src.h_fns("external;");
         uwriteln!(
             self.src.c_fns,
             "external '{}' name '{}';",
