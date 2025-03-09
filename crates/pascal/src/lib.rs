@@ -2010,6 +2010,7 @@ impl InterfaceGenerator<'_> {
         self.src.c_adapters(";\n");
         let src_var_section_start = self.src.c_adapters.len();
         self.src.c_adapters("begin\n");
+        self.src.c_adapters.indent(1);
 
         // construct optional adapters from maybe pointers to real optional
         // structs internally
@@ -2081,6 +2082,7 @@ impl InterfaceGenerator<'_> {
         if !local_vars.is_empty() {
             self.src.c_adapters.as_mut_string().insert_str(src_var_section_start, &local_vars.to_string());
         }
+        self.src.c_adapters.deindent(1);
         self.src.c_adapters("end;\n");
     }
 
