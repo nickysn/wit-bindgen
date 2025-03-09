@@ -1687,8 +1687,8 @@ impl InterfaceGenerator<'_> {
                 let function_name = format!("{prefix}_create");
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}({params}): {name};");
-                self.src.h_helpers(&format!("{func_sig}\n"));
-                self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
+                self.src.h_helpers(&format!("\n{func_sig}\n"));
+                self.src.c_helpers(&format!("\n{func_sig}\nbegin\n"));
                 for field in r.fields.iter() {
                     self.src.c_helpers(&format!("{result_var_name}.{0} := a{0};\n", to_pascal_ident(&field.name)));
                 }
@@ -1704,8 +1704,8 @@ impl InterfaceGenerator<'_> {
                 let function_name = format!("{prefix}_create");
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}({params}): {name};");
-                self.src.h_helpers(&format!("{func_sig}\n"));
-                self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
+                self.src.h_helpers(&format!("\n{func_sig}\n"));
+                self.src.c_helpers(&format!("\n{func_sig}\nbegin\n"));
                 self.src.c_helpers.indent(1);
                 for (i, _ty) in t.types.iter().enumerate() {
                     self.src.c_helpers(&format!("{result_var_name}.f{i} := a{i};\n"));
@@ -1719,9 +1719,9 @@ impl InterfaceGenerator<'_> {
                 let function_name = format!("{prefix}_create");
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}(ptr: P{t_name}; len: SizeUInt): {name};");
-                self.src.h_helpers(&format!("{func_sig}\n"));
+                self.src.h_helpers(&format!("\n{func_sig}\n"));
                 self.src.c_helpers(&format!(
-                    "{func_sig}\n\
+                    "\n{func_sig}\n\
                     begin\n\
                     \x20 {result_var_name}.ptr := ptr;\n\
                     \x20 {result_var_name}.len := len;\n\
