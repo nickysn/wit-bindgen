@@ -2110,7 +2110,7 @@ impl InterfaceGenerator<'_> {
             },
             _ => unimplemented!("multi-value return not supported"),
         }
-        f.gen.src.c_adapters(";\nbegin\n");
+        f.gen.src.c_adapters(";\n");
 
         // Perform all lifting/lowering and append it to our src.
         abi::call(
@@ -2121,7 +2121,11 @@ impl InterfaceGenerator<'_> {
             &mut f,
             false,
         );
-        let FunctionBindgen { src, .. } = f;
+        let FunctionBindgen { src, local_vars, .. } = f;
+        if !local_vars.is_empty() {
+            self.src.c_adapters(&local_vars.to_string());
+        }
+        self.src.c_adapters("begin\n");
         self.src.c_adapters(&src);
         self.src.c_adapters("end;\n");
 
