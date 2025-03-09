@@ -2863,27 +2863,30 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 for (i, ty) in result_types.iter().enumerate() {
                     let name = self.locals.tmp("option");
                     results.push(name.clone());
-                    self.src.push_str(wasm_type(*ty));
-                    self.src.push_str(" ");
-                    self.src.push_str(&name);
-                    self.src.push_str(";\n");
+                    self.local_vars.insert(&name, wasm_type(*ty));
                     let some_result = &some_results[i];
-                    uwriteln!(some, "{name} = {some_result};");
+                    uwriteln!(some, "{name} := {some_result};");
                     let none_result = &none_results[i];
-                    uwriteln!(none, "{name} = {none_result};");
+                    uwriteln!(none, "{name} := {none_result};");
                 }
 
                 let op0 = &operands[0];
                 let ty = self.gen.gen.type_name(payload);
-                let bind_some = format!("const {ty} *{some_payload} = &({op0}).val;");
+                self.local_vars.insert(&some_payload, &format!("P{ty}"));
+                let bind_some = format!("{some_payload} := @({op0}).val;");
 
                 uwrite!(
                     self.src,
                     "\
-                    if (({op0}).is_some) {{
-                        {bind_some}
-                        {some}}} else {{
-                        {none}}}
+                    if ({op0}).is_some then
+                    begin
+                      {bind_some}
+                      {some}
+                    end
+                    else
+                    begin
+                      {none}
+                    end;
                     "
                 );
             }
