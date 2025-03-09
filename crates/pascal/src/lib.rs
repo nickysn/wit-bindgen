@@ -1158,7 +1158,7 @@ function {ns}_borrow_{snake}(handle: {own}): {borrow};
 begin
   {ns}_borrow_{snake} := {borrow}( handle.__handle );
 end;
-                "#
+"#
             ));
         } else {
             // For exported resources first generate a typedef that the user
