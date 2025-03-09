@@ -1783,7 +1783,7 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::Tuple(t) => {
                 for (i, ty) in t.types.iter().enumerate() {
-                    self.free(ty, &format!("&ptr->f{i}"));
+                    self.free(ty, &format!("@(ptr^.f{i})"));
                 }
             }
 
