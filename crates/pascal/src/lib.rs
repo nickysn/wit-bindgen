@@ -1807,17 +1807,16 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::Variant(v) => {
-                self.src.c_helpers("switch ((int32_t) ptr->tag) {\n");
+                self.src.c_helpers("case int32(ptr^.tag) of\n");
                 for (i, case) in v.cases.iter().enumerate() {
                     if let Some(ty) = &case.ty {
-                        uwriteln!(self.src.c_helpers, "case {}: {{", i);
-                        let expr = format!("&ptr->val.{}", to_pascal_ident(&case.name));
+                        uwriteln!(self.src.c_helpers, "{}:\nbegin\n", i);
+                        let expr = format!("@(ptr^.{})", to_pascal_ident(&case.name));
                         self.free(ty, &expr);
-                        self.src.c_helpers("break;\n");
-                        self.src.c_helpers("}\n");
+                        self.src.c_helpers("end;\n");
                     }
                 }
-                self.src.c_helpers("}\n");
+                self.src.c_helpers("end;\n");
             }
 
             TypeDefKind::Option(t) => {
