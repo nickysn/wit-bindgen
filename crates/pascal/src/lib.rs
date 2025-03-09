@@ -1072,7 +1072,7 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
         // ability to drop handles.
         self.src.h_helpers(&format!(
             "
-procedure {ns}_{snake}_drop_own(handle: {own});
+procedure {ns}_{snake}_drop_own(handle: {own});\n\
             "
         ));
         let import_module = if self.in_import {
@@ -1148,7 +1148,7 @@ end;
             // which will have the same index internally.
             self.src.h_helpers(&format!(
                 "
-function {ns}_borrow_{snake}(handle: {own}): {borrow};
+function {ns}_borrow_{snake}(handle: {own}): {borrow};\n\
                 "
             ));
 
