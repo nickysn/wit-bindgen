@@ -2171,7 +2171,7 @@ impl InterfaceGenerator<'_> {
         let mut params = Vec::new();
         for (i, (name, ty)) in func.params.iter().enumerate() {
             if i > 0 {
-                self.src.h_fns(", ");
+                self.src.h_fns("; ");
             }
             let pointer = is_arg_by_pointer(self.resolve, ty);
             // optional param pointer sig_flattening
