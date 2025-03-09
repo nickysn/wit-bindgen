@@ -2753,7 +2753,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
             Instruction::VariantPayloadName => {
                 let name = self.locals.tmp("payload");
-                results.push(format!("*{}", name));
+                results.push(format!("{}^", name));
                 self.payloads.push(name);
             }
 
