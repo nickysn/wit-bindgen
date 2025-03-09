@@ -1863,13 +1863,17 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::Result(r) => {
                 self.src.c_helpers("if not ptr^.is_err then\nbegin\n");
+                self.src.c_helpers.indent(1);
                 if let Some(ok) = &r.ok {
                     self.free(ok, "@(ptr^.ok)");
                 }
                 if let Some(err) = &r.err {
-                    self.src.c_helpers("end else begin\n");
+                    self.src.c_helpers.deindent(1);
+                    self.src.c_helpers("end\nelse\nbegin\n");
+                    self.src.c_helpers.indent(1);
                     self.free(err, "@(ptr^.err)");
                 }
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers("end;\n");
             }
             TypeDefKind::Future(_) => todo!("print_dtor for future"),
