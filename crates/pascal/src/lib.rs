@@ -2983,36 +2983,36 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let result_tmp = self.locals.tmp("result");
                 let set_ok = if let Some(_) = result.ok.as_ref() {
                     let ok_result = &ok_results[0];
-                    format!("{result_tmp}.val.ok = {ok_result};\n")
+                    format!("{result_tmp}.ok := {ok_result};\n")
                 } else {
                     String::new()
                 };
                 let set_err = if let Some(_) = result.err.as_ref() {
                     let err_result = &err_results[0];
-                    format!("{result_tmp}.val.err = {err_result};\n")
+                    format!("{result_tmp}.err := {err_result};\n")
                 } else {
                     String::new()
                 };
 
                 let ty = self.gen.gen.type_name(&Type::Id(*ty));
-                uwriteln!(self.src, "{ty} {result_tmp};");
+                self.local_vars.insert(&result_tmp, &ty);
                 let op0 = &operands[0];
                 uwriteln!(
                     self.src,
-                    "{{4}}switch ({op0}) {{
-                        case 0: {{
-                            {result_tmp}.is_err = false;
+                    "case {op0} of
+                        0:
+                        begin
+                            {result_tmp}.is_err := false;
                             {ok}\
                             {set_ok}\
-                            break;
-                        }}
-                        case 1: {{
-                            {result_tmp}.is_err = true;
+                        end;
+                        1:
+                        begin
+                            {result_tmp}.is_err := true;
                             {err}\
                             {set_err}\
-                            break;
-                        }}
-                    }}"
+                        end;
+                    end;"
                 );
                 results.push(result_tmp);
             }
