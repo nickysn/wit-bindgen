@@ -1154,7 +1154,7 @@ function {ns}_borrow_{snake}(handle: {own}): {borrow};
                 r#"
 function {ns}_borrow_{snake}(handle: {own}): {borrow};
 begin
-  {ns}_borrow_{snake}handle := {borrow}( handle.__handle );
+  {ns}_borrow_{snake} := {borrow}( handle.__handle );
 end;
                 "#
             ));
