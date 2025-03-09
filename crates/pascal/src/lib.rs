@@ -1152,7 +1152,7 @@ function {ns}_borrow_{snake}(handle: {own}): {borrow};
 
             self.src.c_helpers(&format!(
                 r#"
-function {ns}_borrow_{snake}handle: {own}): {borrow};
+function {ns}_borrow_{snake}(handle: {own}): {borrow};
 begin
   {ns}_borrow_{snake}handle := {borrow}( handle.__handle );
 end;
