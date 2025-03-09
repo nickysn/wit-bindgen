@@ -2029,9 +2029,9 @@ impl InterfaceGenerator<'_> {
                         );
                         uwriteln!(
                             optional_adapters,
-                            "if maybe_{param} <> nil then
-                            begin
-                              {param}.val := maybe_{param}^;
+                            "if maybe_{param} <> nil then\n\
+                            begin\n\
+                            \x20 {param}.val := maybe_{param}^;\n\
                             end;",
                         );
                     }
