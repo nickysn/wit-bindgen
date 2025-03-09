@@ -3234,34 +3234,36 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 }
                 Some(Scalar::Type(_)) => {
                     assert_eq!(operands.len(), 1);
-                    self.src.push_str("return ");
+                    self.src.push_str("exit(");
                     self.src.push_str(&operands[0]);
-                    self.src.push_str(";\n");
+                    self.src.push_str(");\n");
                 }
                 Some(Scalar::OptionBool(_)) => {
                     assert_eq!(operands.len(), 1);
                     let variant = &operands[0];
                     self.store_in_retptr(&format!("{}.val", variant));
-                    self.src.push_str("return ");
+                    self.src.push_str("exit(");
                     self.src.push_str(&variant);
-                    self.src.push_str(".is_some;\n");
+                    self.src.push_str(".is_some);\n");
                 }
                 Some(Scalar::ResultBool(ok, err)) => {
                     assert_eq!(operands.len(), 1);
                     let variant = &operands[0];
                     assert!(self.sig.retptrs.len() <= 2);
-                    uwriteln!(self.src, "if (!{}.is_err) {{", variant);
+                    uwriteln!(self.src, "if not {}.is_err then\nbegin", variant);
                     if ok.is_some() {
                         if ok.is_some() {
-                            self.store_in_retptr(&format!("{}.val.ok", variant));
+                            self.store_in_retptr(&format!("{}.ok", variant));
                         } else {
                             self.empty_return_value();
                         }
                     }
                     uwriteln!(
                         self.src,
-                        "   return 1;
-                            }} else {{"
+                        "   exit(true);
+                            end
+                            else
+                            begin"
                     );
                     if err.is_some() {
                         if err.is_some() {
@@ -3272,8 +3274,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     }
                     uwriteln!(
                         self.src,
-                        "   return 0;
-                            }}"
+                        "   exit(0);
+                            end;"
                     );
                     assert_eq!(self.ret_store_cnt, self.sig.retptrs.len());
                 }
