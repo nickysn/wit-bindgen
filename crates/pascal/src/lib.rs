@@ -1095,7 +1095,7 @@ procedure {ns}_{snake}_drop_own(handle: {own});
 begin
   {drop_fn}(handle.__handle);
 end;
-            "#
+"#
         ));
 
         // All resources, whether or not they're imported or exported, have an
