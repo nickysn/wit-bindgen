@@ -1689,9 +1689,11 @@ impl InterfaceGenerator<'_> {
                 let func_sig = format!("function {function_name}({params}): {name};");
                 self.src.h_helpers(&format!("\n{func_sig}\n"));
                 self.src.c_helpers(&format!("\n{func_sig}\nbegin\n"));
+                self.src.c_helpers.indent(1);
                 for field in r.fields.iter() {
                     self.src.c_helpers(&format!("{result_var_name}.{0} := a{0};\n", to_pascal_ident(&field.name)));
                 }
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers(&format!("end;\n"));
             }
 
