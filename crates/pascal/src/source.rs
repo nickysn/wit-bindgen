@@ -33,11 +33,7 @@ impl Source {
                 self.continuing_line = true;
             }
 
-            self.s.push_str(if lines.len() == 1 {
-                line
-            } else {
-                line.trim_start()
-            });
+            self.s.push_str(line);
             if i != lines.len() - 1 || src.ends_with('\n') {
                 self.newline();
             }
