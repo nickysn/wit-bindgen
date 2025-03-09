@@ -3065,10 +3065,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 match sig.results.len() {
                     0 => {}
                     1 => {
-                        self.src.push_str(wasm_type(sig.results[0]));
                         let ret = self.locals.tmp("ret");
+                        self.local_vars.insert(&ret, wasm_type(sig.results[0]));
                         self.wasm_return = Some(ret.clone());
-                        uwrite!(self.src, " {} = ", ret);
+                        uwrite!(self.src, " {} := ", ret);
                         results.push(ret);
                     }
                     _ => unimplemented!(),
