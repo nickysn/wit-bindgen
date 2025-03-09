@@ -2820,25 +2820,25 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let ty = self.gen.gen.type_name(&Type::Id(*ty));
                 let result = self.locals.tmp("variant");
-                uwriteln!(self.src, "{} {};", ty, result);
-                uwriteln!(self.src, "{}.tag = {};", result, operands[0]);
-                uwriteln!(self.src, "{{2}}switch ((int32_t) {}.tag) {{", result);
+                self.local_vars.insert(&result, &ty);
+                uwriteln!(self.src, "{}.tag := {};", result, operands[0]);
+                uwriteln!(self.src, "case int32({}.tag) of", result);
                 for (i, (case, (block, block_results))) in
                     variant.cases.iter().zip(blocks).enumerate()
                 {
-                    uwriteln!(self.src, "case {}: {{", i);
+                    uwriteln!(self.src, "{}:\nbegin", i);
                     self.src.push_str(&block);
                     assert!(block_results.len() == (case.ty.is_some() as usize));
 
                     if let Some(_) = case.ty.as_ref() {
-                        let mut dst = format!("{}.val", result);
+                        let mut dst = format!("{}", result);
                         dst.push_str(".");
                         dst.push_str(&to_pascal_ident(&case.name));
                         self.store_op(&block_results[0], &dst);
                     }
-                    self.src.push_str("break;\n}\n");
+                    self.src.push_str("end;\n");
                 }
-                self.src.push_str("}\n");
+                self.src.push_str("end;\n");
                 results.push(result);
             }
 
