@@ -1792,6 +1792,7 @@ impl InterfaceGenerator<'_> {
         let c_helpers_var_section_start = self.src.c_helpers.len();
         let mut var_section = String::new();
         self.src.c_helpers("begin\n");
+        self.src.c_helpers.indent(1);
         let c_helpers_body_start = self.src.c_helpers.len();
         match &self.resolve.types[id].kind {
             TypeDefKind::Type(t) => self.free(t, "ptr"),
@@ -1870,6 +1871,7 @@ impl InterfaceGenerator<'_> {
             TypeDefKind::Unknown => unreachable!(),
         }
         self.src.c_helpers.as_mut_string().insert_str(c_helpers_var_section_start, &var_section);
+        self.src.c_helpers.deindent(1);
         if c_helpers_body_start == self.src.c_helpers.len() {
             self.src.c_helpers.as_mut_string().truncate(c_helpers_start);
             self.src.h_helpers.as_mut_string().truncate(h_helpers_start);
