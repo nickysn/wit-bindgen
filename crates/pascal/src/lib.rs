@@ -2876,7 +2876,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let ty = self.gen.gen.type_name(&Type::Id(*ty));
                 let result = self.locals.tmp("option");
-                uwriteln!(self.src, "{ty} {result};");
+                self.local_vars.insert(&result, &ty);
                 let op0 = &operands[0];
                 let set_some = format!("{result}.val := {some_result};\n");
                 if none.len() > 0 {
