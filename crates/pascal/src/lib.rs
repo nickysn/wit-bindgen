@@ -1827,15 +1827,15 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::Result(r) => {
-                self.src.c_helpers("if (!ptr->is_err) {\n");
+                self.src.c_helpers("if not ptr^.is_err then\nbegin\n");
                 if let Some(ok) = &r.ok {
-                    self.free(ok, "&ptr->val.ok");
+                    self.free(ok, "@(ptr^.ok)");
                 }
                 if let Some(err) = &r.err {
-                    self.src.c_helpers("} else {\n");
-                    self.free(err, "&ptr->val.err");
+                    self.src.c_helpers("end else begin\n");
+                    self.free(err, "@(ptr^.err)");
                 }
-                self.src.c_helpers("}\n");
+                self.src.c_helpers("end;\n");
             }
             TypeDefKind::Future(_) => todo!("print_dtor for future"),
             TypeDefKind::Stream(_) => todo!("print_dtor for stream"),
