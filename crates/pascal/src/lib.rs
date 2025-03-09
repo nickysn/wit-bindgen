@@ -414,18 +414,15 @@ impl WorldGenerator for Pascal {
 
         source::generated_preamble(&mut h_str, version);
 
-        uwrite!(
+        uwriteln!(
             h_str,
-            "{{$ifndef __BINDINGS_{0}_H}}
-            {{$define __BINDINGS_{0}_H}}
-            //#ifdef __cplusplus
-            //extern \"C\" {{",
+            "{{$ifndef __BINDINGS_{0}_H}}\n\
+            {{$define __BINDINGS_{0}_H}}\n\
+            //#ifdef __cplusplus\n\
+            //extern \"C\" {{\n\
+            //#endif",
             self.world.to_shouty_snake_case(),
         );
-
-        // Deindent the extern C { declaration
-        //h_str.deindent(1);
-        uwriteln!(h_str, "\n//#endif\n");
 
         uwriteln!(h_str, "//#include <stdint.h>");
         uwriteln!(h_str, "//#include <stdbool.h>");
@@ -446,7 +443,7 @@ impl WorldGenerator for Pascal {
         if self.needs_string {
             uwriteln!(
                 h_str,
-                "
+                "\n\
                 type\n\
                 \x20 PP{snake}_string_t = ^P{snake}_string_t;\n\
                 \x20 P{snake}_string_t = ^{snake}_string_t;\n\
