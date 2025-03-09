@@ -361,17 +361,20 @@ begin
   {snake}_string_create.ptr := ptr;
   {snake}_string_create.len := len;
 end;
+
 procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
 begin
   ret^.ptr := P{ty}(s);
   ret^.len := {strlen};
 end;
+
 procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
 begin
   ret^.len := {strlen};
   ret^.ptr := P{ty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
   Move(s^, ret^.ptr^, ret^.len * {size});
 end;
+
 procedure {snake}_string_free(ret: P{snake}_string_t);
 begin
   if ret^.len > 0 then
@@ -379,7 +382,7 @@ begin
   ret^.ptr := nil;
   ret^.len := 0;
 end;
-               ",
+",
             );
         }
         if self.needs_union_int32_float {
