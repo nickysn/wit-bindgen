@@ -1837,14 +1837,19 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::Variant(v) => {
                 self.src.c_helpers("case int32(ptr^.tag) of\n");
+                self.src.c_helpers.indent(1);
                 for (i, case) in v.cases.iter().enumerate() {
                     if let Some(ty) = &case.ty {
-                        uwriteln!(self.src.c_helpers, "{}:\nbegin\n", i);
+                        uwriteln!(self.src.c_helpers, "{}:\n  begin", i);
+                        self.src.c_helpers.indent(2);
                         let expr = format!("@(ptr^.{})", to_pascal_ident(&case.name));
                         self.free(ty, &expr);
+                        self.src.c_helpers.deindent(1);
                         self.src.c_helpers("end;\n");
+                        self.src.c_helpers.deindent(1);
                     }
                 }
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers("end;\n");
             }
 
