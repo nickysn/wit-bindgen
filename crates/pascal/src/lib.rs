@@ -3024,8 +3024,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             Instruction::StringLift { .. } => {
                 let list_name = self.gen.gen.type_name(&Type::String);
                 results.push(format!(
-                    "({}) {{ ({}*)({}), ({}) }}",
-                    list_name,
+                    "{}_create(P{}({}), {})",
+                    list_name.strip_suffix("_t").unwrap(),
                     self.gen.gen.char_type(),
                     operands[0],
                     operands[1]
