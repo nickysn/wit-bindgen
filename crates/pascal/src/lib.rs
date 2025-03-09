@@ -337,6 +337,9 @@ impl WorldGenerator for Pascal {
             uwrite!(
                 self.src.h_helpers,
                 "
+                   // Constructs a string object
+                   function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+
                    // Transfers ownership of `s` into the string `ret`
                    procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
 
@@ -352,6 +355,12 @@ impl WorldGenerator for Pascal {
             uwrite!(
                 self.src.c_helpers,
                 "
+                   function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+                   begin
+                     {snake}_string_create.ptr := ptr;
+                     {snake}_string_create.len := len;
+                   end;
+
                    procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
                    begin
                      ret^.ptr := P{ty}(s);
