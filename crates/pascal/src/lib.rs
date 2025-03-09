@@ -3184,16 +3184,16 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                         let result_ty = self.gen.gen.type_name(ty);
                         let ret = self.locals.tmp("ret");
                         let mut ret_iter = self.sig.ret.retptrs.iter();
-                        uwriteln!(self.src, "{result_ty} {ret};");
+                        self.local_vars.insert(&ret, &result_ty);
                         let ok_name = if ok.is_some() {
                             if let Some(ty) = ret_iter.next() {
                                 let val = self.locals.tmp("ok");
                                 if args.len() > 0 {
                                     uwrite!(args, ", ");
                                 }
-                                uwrite!(args, "&{val}");
+                                uwrite!(args, "@{val}");
                                 let ty = self.gen.gen.type_name(ty);
-                                uwriteln!(self.src, "{} {};", ty, val);
+                                self.local_vars.insert(&val, &ty);
                                 Some(val)
                             } else {
                                 None
@@ -3206,23 +3206,24 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                             if args.len() > 0 {
                                 uwrite!(args, ", ")
                             }
-                            uwrite!(args, "&{val}");
+                            uwrite!(args, "@{val}");
                             let ty = self.gen.gen.type_name(ty);
-                            uwriteln!(self.src, "{} {};", ty, val);
+                            self.local_vars.insert(&val, &ty);
                             Some(val)
                         } else {
                             None
                         };
                         assert!(ret_iter.next().is_none());
                         uwrite!(self.src, "");
-                        uwriteln!(self.src, "{ret}.is_err = !{}({args});", self.sig.name);
+                        uwriteln!(self.src, "{ret}.is_err := not {}({args});", self.sig.name);
                         if err.is_some() {
                             if let Some(err_name) = err_name {
                                 uwriteln!(
                                     self.src,
-                                    "if ({ret}.is_err) {{
-                                        {ret}.val.err = {err_name};
-                                    }}",
+                                    "if {ret}.is_err then
+                                    begin
+                                      {ret}.err := {err_name};
+                                    end;",
                                 );
                             }
                         }
@@ -3230,9 +3231,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                             if let Some(ok_name) = ok_name {
                                 uwriteln!(
                                     self.src,
-                                    "if (!{ret}.is_err) {{
-                                        {ret}.val.ok = {ok_name};
-                                    }}"
+                                    "if not {ret}.is_err then
+                                    begin
+                                      {ret}.ok = {ok_name};
+                                    end;"
                                 );
                             } else {
                                 uwrite!(self.src, "\n");
