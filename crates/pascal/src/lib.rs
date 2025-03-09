@@ -338,50 +338,47 @@ impl WorldGenerator for Pascal {
             uwrite!(
                 self.src.h_helpers,
                 "
-                   // Constructs a string object
-                   function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+// Constructs a string object
+function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
 
-                   // Transfers ownership of `s` into the string `ret`
-                   procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
+// Transfers ownership of `s` into the string `ret`
+procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
 
-                   // Creates a copy of the input nul-terminate string `s` and
-                   // stores it into the component model string `ret`.
-                   procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
+// Creates a copy of the input nul-terminate string `s` and
+// stores it into the component model string `ret`.
+procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
 
-                   // Deallocates the string pointed to by `ret`, deallocating
-                   // the memory behind the string.
-                   procedure {snake}_string_free(ret: P{snake}_string_t);\
+// Deallocates the string pointed to by `ret`, deallocating
+// the memory behind the string.
+procedure {snake}_string_free(ret: P{snake}_string_t);\
                ",
             );
             uwrite!(
                 self.src.c_helpers,
                 "
-                   function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
-                   begin
-                     {snake}_string_create.ptr := ptr;
-                     {snake}_string_create.len := len;
-                   end;
-
-                   procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
-                   begin
-                     ret^.ptr := P{ty}(s);
-                     ret^.len := {strlen};
-                   end;
-
-                   procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
-                   begin
-                     ret^.len := {strlen};
-                     ret^.ptr := P{ty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
-                     Move(s^, ret^.ptr^, ret^.len * {size});
-                   end;
-
-                   procedure {snake}_string_free(ret: P{snake}_string_t);
-                   begin
-                     if ret^.len > 0 then
-                       FreeMem(ret^.ptr);
-                     ret^.ptr := nil;
-                     ret^.len := 0;
-                   end;
+function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+begin
+  {snake}_string_create.ptr := ptr;
+  {snake}_string_create.len := len;
+end;
+procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
+begin
+  ret^.ptr := P{ty}(s);
+  ret^.len := {strlen};
+end;
+procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
+begin
+  ret^.len := {strlen};
+  ret^.ptr := P{ty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
+  Move(s^, ret^.ptr^, ret^.len * {size});
+end;
+procedure {snake}_string_free(ret: P{snake}_string_t);
+begin
+  if ret^.len > 0 then
+    FreeMem(ret^.ptr);
+  ret^.ptr := nil;
+  ret^.len := 0;
+end;
                ",
             );
         }
