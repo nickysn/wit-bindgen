@@ -2771,7 +2771,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let expr_to_match = format!("({}).tag", operands[0]);
 
-                uwriteln!(self.src, "switch ((int32_t) {}) {{", expr_to_match);
+                uwriteln!(self.src, "{{1}}switch ((int32_t) {}) {{", expr_to_match);
                 for (i, ((case, (block, block_results)), payload)) in
                     variant.cases.iter().zip(blocks).zip(payloads).enumerate()
                 {
@@ -2809,7 +2809,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let result = self.locals.tmp("variant");
                 uwriteln!(self.src, "{} {};", ty, result);
                 uwriteln!(self.src, "{}.tag = {};", result, operands[0]);
-                uwriteln!(self.src, "switch ((int32_t) {}.tag) {{", result);
+                uwriteln!(self.src, "{{2}}switch ((int32_t) {}.tag) {{", result);
                 for (i, (case, (block, block_results))) in
                     variant.cases.iter().zip(blocks).enumerate()
                 {
@@ -2887,7 +2887,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 }
                 uwrite!(
                     self.src,
-                    "switch ({op0}) {{
+                    "{{3}}switch ({op0}) {{
                         case 0: {{
                             {result}.is_some = false;
                             {none}\
@@ -2986,7 +2986,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let op0 = &operands[0];
                 uwriteln!(
                     self.src,
-                    "switch ({op0}) {{
+                    "{{4}}switch ({op0}) {{
                         case 0: {{
                             {result_tmp}.is_err = false;
                             {ok}\
@@ -3331,7 +3331,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     .drain(self.blocks.len() - blocks..)
                     .collect::<Vec<_>>();
 
-                uwriteln!(self.src, "switch ((int32_t) {}) {{", operands[0]);
+                uwriteln!(self.src, "{{5}}switch ((int32_t) {}) {{", operands[0]);
                 for (i, (block, results)) in blocks.into_iter().enumerate() {
                     assert!(results.is_empty());
                     uwriteln!(self.src, "case {}: {{", i);
