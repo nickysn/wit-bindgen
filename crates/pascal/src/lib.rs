@@ -2775,26 +2775,23 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 for ty in result_types.iter() {
                     let name = self.locals.tmp("variant");
                     results.push(name.clone());
-                    self.src.push_str(wasm_type(*ty));
-                    self.src.push_str(" ");
-                    self.src.push_str(&name);
-                    self.src.push_str(";\n");
+                    self.local_vars.insert(&name, wasm_type(*ty));
                     variant_results.push(name);
                 }
 
                 let expr_to_match = format!("({}).tag", operands[0]);
 
-                uwriteln!(self.src, "{{1}}switch ((int32_t) {}) {{", expr_to_match);
+                uwriteln!(self.src, "case int32({}) of", expr_to_match);
                 for (i, ((case, (block, block_results)), payload)) in
                     variant.cases.iter().zip(blocks).zip(payloads).enumerate()
                 {
-                    uwriteln!(self.src, "case {}: {{", i);
+                    uwriteln!(self.src, "{}:\nbegin", i);
                     if let Some(ty) = case.ty.as_ref() {
                         let ty = self.gen.gen.type_name(ty);
+                        self.local_vars.insert(&payload, &format!("P{ty}"));
                         uwrite!(
                             self.src,
-                            "const {} *{} = &({}).val",
-                            ty,
+                            "{} := @({})",
                             payload,
                             operands[0],
                         );
@@ -2805,11 +2802,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     self.src.push_str(&block);
 
                     for (name, result) in variant_results.iter().zip(&block_results) {
-                        uwriteln!(self.src, "{} = {};", name, result);
+                        uwriteln!(self.src, "{} := {};", name, result);
                     }
-                    self.src.push_str("break;\n}\n");
+                    self.src.push_str("end;\n");
                 }
-                self.src.push_str("}\n");
+                self.src.push_str("end;\n");
             }
 
             Instruction::VariantLift { variant, ty, .. } => {
