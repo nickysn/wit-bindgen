@@ -1,4 +1,5 @@
 mod component_type_object;
+mod source;
 
 use anyhow::{Ok, Result};
 use heck::*;
@@ -7,7 +8,7 @@ use std::fmt::Write;
 use std::mem;
 use wit_bindgen_core::abi::{self, AbiVariant, Bindgen, Bitcast, Instruction, LiftLower, WasmType};
 use wit_bindgen_core::{
-    dealias, uwrite, uwriteln, wit_parser::*, AnonymousTypeGenerator, Direction, Files,
+    dealias, wit_parser::*, AnonymousTypeGenerator, Direction, Files,
     InterfaceGenerator as _, Ns, WorldGenerator,
 };
 use wit_component::StringEncoding;
@@ -3414,17 +3415,17 @@ enum SourceType {
 
 #[derive(Default)]
 struct Source {
-    h_defs: wit_bindgen_core::Source,
-    h_fns: wit_bindgen_core::Source,
-    h_helpers: wit_bindgen_core::Source,
-    c_defs: wit_bindgen_core::Source,
-    c_fns: wit_bindgen_core::Source,
-    c_helpers: wit_bindgen_core::Source,
-    c_adapters: wit_bindgen_core::Source,
+    h_defs: source::Source,
+    h_fns: source::Source,
+    h_helpers: source::Source,
+    c_defs: source::Source,
+    c_fns: source::Source,
+    c_helpers: source::Source,
+    c_adapters: source::Source,
 }
 
 impl Source {
-    fn src(&mut self, stype: SourceType) -> &mut wit_bindgen_core::Source {
+    fn src(&mut self, stype: SourceType) -> &mut source::Source {
         match stype {
             SourceType::HDefs => &mut self.h_defs,
             SourceType::HFns => &mut self.h_fns,
