@@ -3271,14 +3271,14 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     );
                     if err.is_some() {
                         if err.is_some() {
-                            self.store_in_retptr(&format!("{}.val.err", variant));
+                            self.store_in_retptr(&format!("{}.err", variant));
                         } else {
                             self.empty_return_value();
                         }
                     }
                     uwriteln!(
                         self.src,
-                        "   exit(0);
+                        "   exit(false);
                             end;"
                     );
                     assert_eq!(self.ret_store_cnt, self.sig.retptrs.len());
