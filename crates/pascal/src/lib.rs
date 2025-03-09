@@ -947,19 +947,19 @@ impl Pascal {
         self.src.c_fns("\n");
         self.src.c_fns(
             r#"
-                //__attribute__((__weak__, __export_name__("cabi_realloc")))
-                function cabi_realloc(ptr: Pointer; old_size: SizeUInt; align: SizeUInt; new_size: SizeUInt): Pointer;
-                begin
-                  if new_size = 0 then
-                  begin
-                    cabi_realloc := Pointer(align);
-                    exit;
-                  end;
-                  ReallocMem(ptr, new_size);
-                  //if (!ptr) abort();
-                  cabi_realloc := ptr;
-                end;
-            "#,
+//__attribute__((__weak__, __export_name__("cabi_realloc")))
+function cabi_realloc(ptr: Pointer; old_size: SizeUInt; align: SizeUInt; new_size: SizeUInt): Pointer;
+begin
+  if new_size = 0 then
+  begin
+    cabi_realloc := Pointer(align);
+    exit;
+  end;
+  ReallocMem(ptr, new_size);
+  //if (!ptr) abort();
+  cabi_realloc := ptr;
+end;
+"#,
         );
     }
 }
