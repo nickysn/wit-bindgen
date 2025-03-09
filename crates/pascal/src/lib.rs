@@ -1813,22 +1813,26 @@ impl InterfaceGenerator<'_> {
             }
 
             TypeDefKind::List(t) => {
-                self.src.c_helpers("  list_len := ptr^.len;\n");
-                uwriteln!(self.src.c_helpers, "  if list_len > 0 then\n  begin");
+                self.src.c_helpers("list_len := ptr^.len;\n");
+                uwriteln!(self.src.c_helpers, "if list_len > 0 then\nbegin");
+                self.src.c_helpers.indent(1);
                 let mut t_name = String::new();
                 self.gen.push_type_name(t, &mut t_name);
-                var_section = format!("var
-                  i: SizeUInt;
-                  list_len: SizeUInt;
-                  list_ptr: P{t_name};\n");
+                var_section = format!("var\n\
+                \x20 i: SizeUInt;\n\
+                \x20 list_len: SizeUInt;\n\
+                \x20 list_ptr: P{t_name};\n");
                 self.src
                     .c_helpers("list_ptr := ptr^.ptr;\n");
                 self.src
                     .c_helpers("for i := 0 to list_len - 1 do\nbegin\n");
+                self.src.c_helpers.indent(1);
                 self.free(t, &format!("@list_ptr[i]"));
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers("end;\n");
-                uwriteln!(self.src.c_helpers, "    FreeMem(list_ptr);");
-                uwriteln!(self.src.c_helpers, "  end;");
+                uwriteln!(self.src.c_helpers, "FreeMem(list_ptr);");
+                self.src.c_helpers.deindent(1);
+                uwriteln!(self.src.c_helpers, "end;");
             }
 
             TypeDefKind::Variant(v) => {
