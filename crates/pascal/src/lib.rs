@@ -1670,7 +1670,7 @@ impl InterfaceGenerator<'_> {
             TypeDefKind::Record(r) => {
                 let mut params = String::new();
                 for field in r.fields.iter() {
-                    params.push_str(&format!("const a{}: {}; ", field.name, self.gen.type_name(&field.ty)));
+                    params.push_str(&format!("const a{}: {}; ", to_pascal_ident(&field.name), self.gen.type_name(&field.ty)));
                 }
                 params = params.strip_suffix("; ").unwrap().to_string();
                 let function_name = format!("{prefix}_create");
@@ -1679,7 +1679,7 @@ impl InterfaceGenerator<'_> {
                 self.src.h_helpers(&format!("{func_sig}\n"));
                 self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
                 for field in r.fields.iter() {
-                    self.src.c_helpers(&format!("{result_var_name}.{0} := a{0};\n", field.name));
+                    self.src.c_helpers(&format!("{result_var_name}.{0} := a{0};\n", to_pascal_ident(&field.name)));
                 }
                 self.src.c_helpers(&format!("end;\n"));
             }
