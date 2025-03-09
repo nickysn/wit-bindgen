@@ -2926,14 +2926,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 for (i, ty) in result_types.iter().enumerate() {
                     let name = self.locals.tmp("result");
                     results.push(name.clone());
-                    self.src.push_str(wasm_type(*ty));
-                    self.src.push_str(" ");
-                    self.src.push_str(&name);
-                    self.src.push_str(";\n");
+                    self.local_vars.insert(&name, wasm_type(*ty));
                     let ok_result = &ok_results[i];
-                    uwriteln!(ok, "{name} = {ok_result};");
+                    uwriteln!(ok, "{name} := {ok_result};");
                     let err_result = &err_results[i];
-                    uwriteln!(err, "{name} = {err_result};");
+                    uwriteln!(err, "{name} := {err_result};");
                 }
 
                 let op0 = &operands[0];
@@ -2952,13 +2949,16 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 uwrite!(
                     self.src,
                     "\
-                    if (({op0}).is_err) {{
-                        {bind_err}\
-                        {err}\
-                    }} else {{
-                        {bind_ok}\
-                        {ok}\
-                    }}
+                    if ({op0}).is_err then
+                    begin
+                      {bind_err}\
+                      {err}\
+                    end
+                    else
+                    begin
+                      {bind_ok}\
+                      {ok}\
+                    end;
                     "
                 );
             }
