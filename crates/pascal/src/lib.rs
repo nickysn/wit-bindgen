@@ -1998,13 +1998,13 @@ impl InterfaceGenerator<'_> {
                     if let TypeDefKind::Option(_) = &f.gen.resolve.types[*id].kind {
                         let ty = f.gen.gen.type_name(ty);
                         f.local_vars.insert(param, &ty);
-                        uwrite!(
+                        uwriteln!(
                             optional_adapters,
                             "{param}.is_some := maybe_{param} <> nil;"
                         );
                         uwriteln!(
                             optional_adapters,
-                            "if maybe_{param} then
+                            "if maybe_{param} <> nil then
                             begin
                               {param}.val := maybe_{param}^;
                             end;",
