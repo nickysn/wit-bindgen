@@ -1706,9 +1706,11 @@ impl InterfaceGenerator<'_> {
                 let func_sig = format!("function {function_name}({params}): {name};");
                 self.src.h_helpers(&format!("{func_sig}\n"));
                 self.src.c_helpers(&format!("{func_sig}\nbegin\n"));
+                self.src.c_helpers.indent(1);
                 for (i, _ty) in t.types.iter().enumerate() {
                     self.src.c_helpers(&format!("{result_var_name}.f{i} := a{i};\n"));
                 }
+                self.src.c_helpers.deindent(1);
                 self.src.c_helpers(&format!("end;\n"));
             }
 
