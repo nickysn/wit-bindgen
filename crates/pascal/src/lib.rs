@@ -2878,7 +2878,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let result = self.locals.tmp("option");
                 uwriteln!(self.src, "{ty} {result};");
                 let op0 = &operands[0];
-                let set_some = format!("{result}.val = {some_result};\n");
+                let set_some = format!("{result}.val := {some_result};\n");
                 if none.len() > 0 {
                     none.push('\n');
                 }
@@ -2887,19 +2887,19 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 }
                 uwrite!(
                     self.src,
-                    "{{3}}switch ({op0}) {{
-                        case 0: {{
-                            {result}.is_some = false;
+                    "case {op0} of
+                        0:
+                        begin
+                            {result}.is_some := false;
                             {none}\
-                            break;
-                        }}
-                        case 1: {{
-                            {result}.is_some = true;
+                        end;
+                        1:
+                        begin
+                            {result}.is_some := true;
                             {some}\
                             {set_some}\
-                            break;
-                        }}
-                    }}\n"
+                        end;
+                    end;\n"
                 );
                 results.push(result);
             }
