@@ -1104,14 +1104,13 @@ end;
         // All resources, whether or not they're imported or exported, have an
         // handle-index-based representation for "own" handles.
         self.src.h_defs(&format!(
-            "
-            type
-              PP{own} = ^P{own};
-              P{own} = ^{own};
-              {own} = record
-                __handle: int32;
-              end;
-            "
+            "\n\
+            type\n\
+            \x20 PP{own} = ^P{own};\n\
+            \x20 P{own} = ^{own};\n\
+            \x20 {own} = record\n\
+            \x20   __handle: int32;\n\
+            \x20 end;\n"
         ));
 
         if self.in_import {
@@ -1119,14 +1118,13 @@ end;
             // way as owned handles. They're given a unique type, however, to
             // prevent type confusion at runtime in theory.
             self.src.h_defs(&format!(
-                "
-                type
-                  PP{borrow} = ^P{borrow};
-                  P{borrow} = ^{borrow};
-                  {borrow} = record
-                    __handle: int32;
-                  end;
-                "
+                "\n\
+                type\n\
+                \x20 PP{borrow} = ^P{borrow};\n\
+                \x20 P{borrow} = ^{borrow};\n\
+                \x20 {borrow} = record\n\
+                \x20   __handle: int32;\n\
+                \x20 end;\n"
             ));
 
             if self.autodrop_enabled() {
@@ -1243,7 +1241,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         self.docs(docs, SourceType::HDefs);
         self.start_typedef_struct(id);
         for (i, ty) in tuple.types.iter().enumerate() {
-            uwrite!(self.src.h_defs, " f{i}: ");
+            uwrite!(self.src.h_defs, "f{i}: ");
             self.print_ty(SourceType::HDefs, ty);
             uwriteln!(self.src.h_defs, ";");
         }
@@ -1258,10 +1256,10 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
 
         uwriteln!(
             self.src.h_defs,
-            "type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = {int_t};",
+            "type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = {int_t};",
             &self.gen.type_names[&id],
         );
 
@@ -1310,6 +1308,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         self.src.h_defs(int_repr(variant.tag()));
         if !cases_with_data.is_empty() {
             self.src.h_defs(" of\n");
+            self.src.h_defs.indent(1);
         } else {
             self.src.h_defs(";\n");
         }
@@ -1322,6 +1321,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
                 self.print_ty(SourceType::HDefs, ty);
                 self.src.h_defs(");\n");
             }
+            self.src.h_defs.deindent(1);
         }
         self.finish_typedef_struct(id);
 
@@ -1366,10 +1366,10 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         let int_t = int_repr(enum_.tag());
         uwriteln!(
             self.src.h_defs,
-            "type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = {int_t};",
+            "type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = {int_t};",
             &self.gen.type_names[&id],
         );
 
@@ -1402,11 +1402,10 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
 
         uwrite!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = ",
+            "type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = ",
             &self.gen.type_names[&id],
         );
         self.print_ty(SourceType::HDefs, ty);
@@ -1451,11 +1450,11 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     fn anonymous_type_handle(&mut self, id: TypeId, handle: &Handle, _docs: &Docs) {
         uwrite!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = ",
+            "\n\
+            type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = ",
             &self.gen.type_names[&id]
         );
         let resource = match handle {
@@ -1466,38 +1465,41 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             Handle::Borrow(_) => self.src.h_defs(&info.borrow),
             Handle::Own(_) => self.src.h_defs(&info.own),
         }
-        self.src.h_defs(";");
+        self.src.h_defs(";\n");
     }
 
     fn anonymous_type_tuple(&mut self, id: TypeId, ty: &Tuple, _docs: &Docs) {
         uwriteln!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = record",
+            "\n\
+            type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = record",
             &self.gen.type_names[&id]
         );
+        self.src.h_defs.indent(2);
         for (i, t) in ty.types.iter().enumerate() {
             let ty = self.gen.type_name(t);
             uwriteln!(self.src.h_defs, "f{i}: {ty};");
         }
+        self.src.h_defs.deindent(1);
         self.src.h_defs("end;\n");
+        self.src.h_defs.deindent(1);
     }
 
     fn anonymous_type_option(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
         let ty = self.gen.type_name(ty);
         uwriteln!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = record
-                is_some: Boolean;
-                val: {ty};
-              end;",
+            "\n\
+            type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = record\n\
+            \x20   is_some: Boolean;\n\
+            \x20   val: {ty};\n\
+            \x20 end;",
             &self.gen.type_names[&id]
         );
     }
@@ -1505,17 +1507,19 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
     fn anonymous_type_result(&mut self, id: TypeId, ty: &Result_, _docs: &Docs) {
         uwriteln!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = record",
+            "\n\
+            type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = record",
             &self.gen.type_names[&id]
         );
+        self.src.h_defs.indent(2);
         let ok_ty = ty.ok.as_ref();
         let err_ty = ty.err.as_ref();
         if ok_ty.is_some() || err_ty.is_some() {
             self.src.h_defs("case is_err: Boolean of\n");
+            self.src.h_defs.indent(1);
             if let Some(ok) = ok_ty {
                 let ty = self.gen.type_name(ok);
                 uwriteln!(self.src.h_defs, "false: (ok: {ty});");
@@ -1524,26 +1528,29 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
                 let ty = self.gen.type_name(err);
                 uwriteln!(self.src.h_defs, "true: (err: {ty});");
             }
+            self.src.h_defs.deindent(1);
         } else {
             self.src.h_defs("is_err: Boolean;\n");
         }
+        self.src.h_defs.deindent(1);
         self.src.h_defs("end;");
+        self.src.h_defs.deindent(1);
     }
 
     fn anonymous_type_list(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
+        let ty = self.gen.type_name(ty);
         uwriteln!(
             self.src.h_defs,
-            "
-            type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = record",
+            "\n\
+            type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = record\n\
+            \x20   ptr: P{ty};\n\
+            \x20   len: SizeUInt;\n\
+            \x20 end;",
             &self.gen.type_names[&id]
         );
-        let ty = self.gen.type_name(ty);
-        uwriteln!(self.src.h_defs, "  ptr: P{ty};");
-        self.src.h_defs("  len: SizeUInt;\n");
-        self.src.h_defs("end;");
     }
 
     fn anonymous_type_future(&mut self, _id: TypeId, _ty: &Option<Type>, _docs: &Docs) {
@@ -2293,16 +2300,19 @@ impl InterfaceGenerator<'_> {
         let name = &self.gen.type_names[&id];
         uwriteln!(
             self.src.h_defs,
-            "type
-              PP{0} = ^P{0};
-              P{0} = ^{0};
-              {0} = record",
+            "type\n\
+            \x20 PP{0} = ^P{0};\n\
+            \x20 P{0} = ^{0};\n\
+            \x20 {0} = record",
             &name
             );
+        self.src.h_defs.indent(2);
     }
 
-    fn finish_typedef_struct(&mut self, id: TypeId) {
+    fn finish_typedef_struct(&mut self, _id: TypeId) {
+        self.src.h_defs.deindent(1);
         self.src.h_defs("end;");
+        self.src.h_defs.deindent(1);
     }
 
     fn owner_namespace(&self, id: TypeId) -> String {
