@@ -51,15 +51,6 @@ impl Source {
     pub fn push_str(&mut self, src: &str) {
         let lines = src.lines().collect::<Vec<_>>();
         for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("//") {
-                self.in_line_comment = true;
-            }
-
-            if trimmed == "type" {
-                self.indent = 0;
-            }
-
             if !self.continuing_line {
                 if !line.is_empty() {
                     for _ in 0..self.indent {
@@ -69,27 +60,33 @@ impl Source {
                 self.continuing_line = true;
             }
 
-            let need_ident = !self.in_line_comment && (trimmed == "begin" || trimmed.ends_with("= record") || trimmed == "type" || trimmed == "var");
-            let need_unident = !self.in_line_comment && (trimmed == "end" || trimmed.starts_with("end;") || trimmed.starts_with("end.") || trimmed.starts_with("end "));
+            let trimmed = line.trim();
+            if trimmed.starts_with("//") {
+                self.in_line_comment = true;
+            }
 
-            if need_unident && self.s.ends_with("  ") {
-                self.s.pop();
-                self.s.pop();
+            if !self.in_line_comment {
+                if trimmed.starts_with('}') && self.s.ends_with("  ") {
+                    self.s.pop();
+                    self.s.pop();
+                }
             }
             self.s.push_str(if lines.len() == 1 {
                 line
             } else {
                 line.trim_start()
             });
-            if need_ident {
-                self.indent += 1;
-            }
-            if need_unident {
-                // Note that a `saturating_sub` is used here to prevent a panic
-                // here in the case of invalid code being generated in debug
-                // mode. It's typically easier to debug those issues through
-                // looking at the source code rather than getting a panic.
-                self.indent = self.indent.saturating_sub(1);
+            if !self.in_line_comment {
+                if trimmed.ends_with('{') {
+                    self.indent += 1;
+                }
+                if trimmed.starts_with('}') {
+                    // Note that a `saturating_sub` is used here to prevent a panic
+                    // here in the case of invalid code being generated in debug
+                    // mode. It's typically easier to debug those issues through
+                    // looking at the source code rather than getting a panic.
+                    self.indent = self.indent.saturating_sub(1);
+                }
             }
             if i != lines.len() - 1 || src.ends_with('\n') {
                 self.newline();
