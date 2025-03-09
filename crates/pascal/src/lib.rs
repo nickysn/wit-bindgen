@@ -1708,10 +1708,6 @@ impl InterfaceGenerator<'_> {
                     self.src.c_helpers(&format!("{result_var_name}.f{i} := a{i};\n"));
                 }
                 self.src.c_helpers(&format!("end;\n"));
-
-                //for (i, ty) in t.types.iter().enumerate() {
-                //    self.free(ty, &format!("&ptr->f{i}"));
-                //}
             }
 
             TypeDefKind::List(t) => {
