@@ -1721,11 +1721,11 @@ impl InterfaceGenerator<'_> {
                 let func_sig = format!("function {function_name}(ptr: P{t_name}; len: SizeUInt): {name};");
                 self.src.h_helpers(&format!("{func_sig}\n"));
                 self.src.c_helpers(&format!(
-                    "{func_sig}
-                    begin
-                      {result_var_name}.ptr := ptr;
-                      {result_var_name}.len := len;
-                    end;"));
+                    "{func_sig}\n\
+                    begin\n\
+                    \x20 {result_var_name}.ptr := ptr;\n\
+                    \x20 {result_var_name}.len := len;\n\
+                    end;\n"));
             }
 
             TypeDefKind::Variant(v) => {
