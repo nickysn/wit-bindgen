@@ -2925,8 +2925,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
 
             Instruction::OptionLift { ty, .. } => {
-                let (mut some, some_results) = self.blocks.pop().unwrap();
-                let (mut none, none_results) = self.blocks.pop().unwrap();
+                let (some, some_results) = self.blocks.pop().unwrap();
+                let (none, none_results) = self.blocks.pop().unwrap();
                 assert!(none_results.len() == 0);
                 assert!(some_results.len() == 1);
                 let some_result = &some_results[0];
@@ -2935,28 +2935,33 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let result = self.locals.tmp("option");
                 self.local_vars.insert(&result, &ty);
                 let op0 = &operands[0];
-                let set_some = format!("{result}.val := {some_result};\n");
-                if none.len() > 0 {
-                    none.push('\n');
-                }
-                if some.len() > 0 {
-                    some.push('\n');
-                }
-                uwrite!(
+                let set_some = format!("{result}.val := {some_result};");
+                uwriteln!(
                     self.src,
-                    "case {op0} of
-                        0:
-                        begin
-                            {result}.is_some := false;
-                            {none}\
-                        end;
-                        1:
-                        begin
-                            {result}.is_some := true;
-                            {some}\
-                            {set_some}\
-                        end;
-                    end;\n"
+                    "case {op0} of\n\
+                    \x20 0:\n\
+                    \x20   begin\n\
+                    \x20     {result}.is_some := false;");
+                self.src.indent(3);
+                if !none.is_empty() {
+                    uwriteln!(self.src, "{none}");
+                }
+                self.src.deindent(3);
+                uwriteln!(
+                    self.src,
+                    "    end;\n\
+                    \x20 1:\n\
+                    \x20   begin\n\
+                    \x20     {result}.is_some := true;");
+                self.src.indent(3);
+                if !some.is_empty() {
+                    uwriteln!(self.src, "{some}");
+                }
+                uwriteln!(self.src, "{set_some}");
+                self.src.deindent(3);
+                uwriteln!(self.src, 
+                    "    end;\n\
+                    end;"
                 );
                 results.push(result);
             }
