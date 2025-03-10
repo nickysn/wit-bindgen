@@ -509,6 +509,7 @@ end;
             \x20 {{$I {snake}h.inc}}\n\
             implementation\n\
             \x20 {{$I {snake}.inc}}\n\
+            \x20 {{$I {snake}_exports_impl.inc}}\n\
             end.");
 
         files.push(&format!("{snake}.pas"), unit_str.as_bytes());
