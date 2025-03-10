@@ -3021,17 +3021,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
 
             Instruction::ResultLift { result, ty, .. } => {
-                let (mut err, err_results) = self.blocks.pop().unwrap();
+                let (err, err_results) = self.blocks.pop().unwrap();
                 assert!(err_results.len() == (result.err.is_some() as usize));
-                let (mut ok, ok_results) = self.blocks.pop().unwrap();
+                let (ok, ok_results) = self.blocks.pop().unwrap();
                 assert!(ok_results.len() == (result.ok.is_some() as usize));
-
-                if err.len() > 0 {
-                    err.push_str("\n");
-                }
-                if ok.len() > 0 {
-                    ok.push_str("\n");
-                }
 
                 let result_tmp = self.locals.tmp("result");
                 let set_ok = if let Some(_) = result.ok.as_ref() {
@@ -3052,21 +3045,34 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let op0 = &operands[0];
                 uwriteln!(
                     self.src,
-                    "case {op0} of
-                        0:
-                        begin
-                            {result_tmp}.is_err := false;
-                            {ok}\
-                            {set_ok}\
-                        end;
-                        1:
-                        begin
-                            {result_tmp}.is_err := true;
-                            {err}\
-                            {set_err}\
-                        end;
-                    end;"
-                );
+                    "case {op0} of\n\
+                    \x20 0:\n\
+                    \x20   begin\n\
+                    \x20     {result_tmp}.is_err := false;");
+                self.src.indent(3);
+                if !ok.is_empty() {
+                    uwriteln!(self.src, "{ok}");
+                }
+                if !set_ok.is_empty() {
+                    uwrite!(self.src, "{set_ok}");
+                }
+                self.src.deindent(3);
+                uwriteln!(self.src, "\
+                    \x20   end;\n\
+                    \x20 1:\n\
+                    \x20   begin\n\
+                    \x20     {result_tmp}.is_err := true;");
+                self.src.indent(3);
+                if !err.is_empty() {
+                    uwriteln!(self.src, "{err}");
+                }
+                if !set_err.is_empty() {
+                    uwrite!(self.src, "{set_err}");
+                }
+                self.src.deindent(3);
+                uwriteln!(self.src, "\
+                    \x20   end;\n\
+                    end;");
                 results.push(result_tmp);
             }
 
