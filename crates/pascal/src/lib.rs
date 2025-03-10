@@ -962,6 +962,9 @@ begin
   //if (!ptr) abort();
   cabi_realloc := ptr;
 end;
+
+exports
+  cabi_realloc;
 "#,
         );
     }
@@ -2156,6 +2159,10 @@ impl InterfaceGenerator<'_> {
         self.src.c_adapters(&src);
         self.src.c_adapters.deindent(1);
         self.src.c_adapters("end;\n");
+        uwriteln!(
+            self.src.c_adapters,
+            "\nexports\n  {import_name} name '{export_name}';"
+        );
 
         if abi::guest_export_needs_post_return(self.resolve, func) {
             uwriteln!(
