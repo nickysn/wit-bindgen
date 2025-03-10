@@ -2152,7 +2152,9 @@ impl InterfaceGenerator<'_> {
             self.src.c_adapters(&local_vars.to_string());
         }
         self.src.c_adapters("begin\n");
+        self.src.c_adapters.indent(1);
         self.src.c_adapters(&src);
+        self.src.c_adapters.deindent(1);
         self.src.c_adapters("end;\n");
 
         if abi::guest_export_needs_post_return(self.resolve, func) {
