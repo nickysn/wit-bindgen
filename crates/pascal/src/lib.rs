@@ -2826,10 +2826,12 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let expr_to_match = format!("({}).tag", operands[0]);
 
                 uwriteln!(self.src, "case int32({}) of", expr_to_match);
+                self.src.indent(1);
                 for (i, ((case, (block, block_results)), payload)) in
                     variant.cases.iter().zip(blocks).zip(payloads).enumerate()
                 {
-                    uwriteln!(self.src, "{}:\nbegin", i);
+                    uwriteln!(self.src, "{}:\n  begin", i);
+                    self.src.indent(2);
                     if let Some(ty) = case.ty.as_ref() {
                         let ty = self.gen.gen.type_name(ty);
                         self.local_vars.insert(&payload, &format!("P{ty}"));
@@ -2848,8 +2850,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     for (name, result) in variant_results.iter().zip(&block_results) {
                         uwriteln!(self.src, "{} := {};", name, result);
                     }
-                    self.src.push_str("end;\n");
+                    self.src.deindent(2);
+                    self.src.push_str("  end;\n");
                 }
+                self.src.deindent(1);
                 self.src.push_str("end;\n");
             }
 
