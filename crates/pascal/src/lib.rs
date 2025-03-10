@@ -2864,10 +2864,12 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 self.local_vars.insert(&result, &ty);
                 uwriteln!(self.src, "{}.tag := {};", result, operands[0]);
                 uwriteln!(self.src, "case int32({}.tag) of", result);
+                self.src.indent(1);
                 for (i, (case, (block, block_results))) in
                     variant.cases.iter().zip(blocks).enumerate()
                 {
-                    uwriteln!(self.src, "{}:\nbegin", i);
+                    uwriteln!(self.src, "{}:\n  begin", i);
+                    self.src.indent(2);
                     self.src.push_str(&block);
                     assert!(block_results.len() == (case.ty.is_some() as usize));
 
@@ -2877,8 +2879,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                         dst.push_str(&to_pascal_ident(&case.name));
                         self.store_op(&block_results[0], &dst);
                     }
-                    self.src.push_str("end;\n");
+                    self.src.deindent(2);
+                    self.src.push_str("  end;\n");
                 }
+                self.src.deindent(1);
                 self.src.push_str("end;\n");
                 results.push(result);
             }
