@@ -2999,21 +2999,25 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 } else {
                     String::new()
                 };
-                uwrite!(
-                    self.src,
-                    "\
-                    if ({op0}).is_err then
-                    begin
-                      {bind_err}\
-                      {err}\
-                    end
-                    else
-                    begin
-                      {bind_ok}\
-                      {ok}\
-                    end;
-                    "
-                );
+                uwriteln!(self.src, "if ({op0}).is_err then\nbegin");
+                self.src.indent(1);
+                if !bind_err.is_empty() {
+                    uwriteln!(self.src, "{bind_err}//bind_err");
+                }
+                if !err.is_empty() {
+                    uwrite!(self.src, "{err}");
+                }
+                self.src.deindent(1);
+                uwriteln!(self.src, "end\nelse\nbegin");
+                self.src.indent(1);
+                if !bind_ok.is_empty() {
+                    uwriteln!(self.src, "{bind_ok}//bind_ok");
+                }
+                if !ok.is_empty() {
+                    uwrite!(self.src, "{ok}");
+                }
+                self.src.deindent(1);
+                uwriteln!(self.src, "end;");
             }
 
             Instruction::ResultLift { result, ty, .. } => {
