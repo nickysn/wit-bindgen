@@ -3320,6 +3320,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     let variant = &operands[0];
                     assert!(self.sig.retptrs.len() <= 2);
                     uwriteln!(self.src, "if not {}.is_err then\nbegin", variant);
+                    self.src.indent(1);
                     if ok.is_some() {
                         if ok.is_some() {
                             self.store_in_retptr(&format!("{}.ok", variant));
@@ -3327,13 +3328,9 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                             self.empty_return_value();
                         }
                     }
-                    uwriteln!(
-                        self.src,
-                        "   exit(true);
-                            end
-                            else
-                            begin"
-                    );
+                    self.src.deindent(1);
+                    uwriteln!(self.src, "  exit(true);\nend\nelse\nbegin");
+                    self.src.indent(1);
                     if err.is_some() {
                         if err.is_some() {
                             self.store_in_retptr(&format!("{}.err", variant));
@@ -3341,11 +3338,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                             self.empty_return_value();
                         }
                     }
-                    uwriteln!(
-                        self.src,
-                        "   exit(false);
-                            end;"
-                    );
+                    self.src.deindent(1);
+                    uwriteln!(self.src, "  exit(false);\nend;");
                     assert_eq!(self.ret_store_cnt, self.sig.retptrs.len());
                 }
             },
