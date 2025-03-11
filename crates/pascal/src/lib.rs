@@ -3214,7 +3214,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                         let ret = self.locals.tmp("ret");
                         let ty = func.result.unwrap();
                         let ty = self.gen.gen.type_name(&ty);
-                        uwriteln!(self.src, "{} {} = {}({});", ty, ret, self.sig.name, args);
+                        self.local_vars.insert(&ret, &ty);
+                        uwriteln!(self.src, "{} := {}({});", ret, self.sig.name, args);
                         results.push(ret);
                     }
                     Some(Scalar::OptionBool(ty)) => {
