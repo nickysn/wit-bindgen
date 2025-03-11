@@ -2122,10 +2122,10 @@ impl InterfaceGenerator<'_> {
         f.gen.src.c_adapters("(");
         for (i, param) in sig.params.iter().enumerate() {
             if i > 0 {
-                f.gen.src.c_adapters(", ");
+                f.gen.src.c_adapters("; ");
             }
             let name = f.locals.tmp("arg");
-            uwrite!(f.gen.src.c_adapters, "{} {}", wasm_type(*param), name);
+            uwrite!(f.gen.src.c_adapters, "{}: {}", name, wasm_type(*param));
             f.params.push(name);
         }
         //if sig.params.len() == 0 {
