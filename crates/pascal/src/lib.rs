@@ -344,47 +344,51 @@ end;
             let string_ty = self.string_type();
             let pstring_ty = self.to_pointer(&string_ty);
             let string_prefix = self.strip_suffix_t(&string_ty);
+            let string_create = self.to_our_case(&format!("{string_prefix}_create"));
+            let string_set = self.to_our_case(&format!("{string_prefix}_set"));
+            let string_dup = self.to_our_case(&format!("{string_prefix}_dup"));
+            let string_free = self.to_our_case(&format!("{string_prefix}_free"));
             uwrite!(
                 self.src.h_helpers,
                 "
 // Constructs a string object
-function {string_prefix}_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
+function {string_create}(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 
 // Transfers ownership of `s` into the string `ret`
-procedure {string_prefix}_set(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_set}(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Creates a copy of the input nul-terminate string `s` and
 // stores it into the component model string `ret`.
-procedure {string_prefix}_dup(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_dup}(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Deallocates the string pointed to by `ret`, deallocating
 // the memory behind the string.
-procedure {string_prefix}_free(ret: {pstring_ty});\
+procedure {string_free}(ret: {pstring_ty});\
                ",
             );
             uwrite!(
                 self.src.c_helpers,
                 "
-function {string_prefix}_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
+function {string_create}(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 begin
-  {string_prefix}_create.ptr := ptr;
-  {string_prefix}_create.len := len;
+  {string_create}.ptr := ptr;
+  {string_create}.len := len;
 end;
 
-procedure {string_prefix}_set(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_set}(ret: {pstring_ty}; const s: {pchar_ty});
 begin
   ret^.ptr := {pty}(s);
   ret^.len := {strlen};
 end;
 
-procedure {string_prefix}_dup(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_dup}(ret: {pstring_ty}; const s: {pchar_ty});
 begin
   ret^.len := {strlen};
   ret^.ptr := {pty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
   Move(s^, ret^.ptr^, ret^.len * {size});
 end;
 
-procedure {string_prefix}_free(ret: {pstring_ty});
+procedure {string_free}(ret: {pstring_ty});
 begin
   if ret^.len > 0 then
     FreeMem(ret^.ptr);
@@ -2029,8 +2033,9 @@ impl InterfaceGenerator<'_> {
             }
             Type::String => {
                 let string_prefix = self.gen.strip_suffix_t(&self.gen.string_type()).to_string();
+                let string_free = self.gen.to_our_case(&format!("{string_prefix}_free"));
                 self.src
-                    .c_helpers(&format!("{string_prefix}_free({expr});\n"));
+                    .c_helpers(&format!("{string_free}({expr});\n"));
             }
             Type::Bool
             | Type::U8
@@ -3241,9 +3246,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::StringLift { .. } => {
                 let list_name = self.gen.gen.type_name(&Type::String);
+                let string_prefix = self.gen.gen.strip_suffix_t(&list_name);
+                let string_create = self.gen.gen.to_our_case(&format!("{string_prefix}_create"));
                 results.push(format!(
-                    "{}_create({}({}), {})",
-                    self.gen.gen.strip_suffix_t(&list_name),
+                    "{}({}({}), {})",
+                    string_create,
                     self.gen.gen.to_pointer(&self.gen.gen.char_type()),
                     operands[0],
                     operands[1]
