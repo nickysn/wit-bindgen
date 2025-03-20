@@ -954,6 +954,14 @@ struct InterfaceGenerator<'a> {
 }
 
 impl Pascal {
+    fn to_our_case(&self, s: &str) -> String {
+        if self.opts.c_style_type_names {
+            s.to_snake_case()
+        } else {
+            s.to_pascal_case()
+        }
+    }
+
     fn strip_suffix_t<'a>(&self, s: &'a str) -> &'a str {
         if self.opts.c_style_type_names {
             s.strip_suffix("_t").unwrap()
