@@ -948,6 +948,13 @@ impl Pascal {
         s.strip_suffix("_t").unwrap()
     }
 
+    fn add_suffix_t(&self, s: &str) -> String {
+        let mut q = String::new();
+        q.push_str(s);
+        q.push_str("_t");
+        q
+    }
+
     fn print_intrinsics(&mut self) {
         // Note that these intrinsics are declared as `weak` so they can be
         // overridden from some other symbol.
@@ -1076,8 +1083,8 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
         borrow.push_str("_");
         own.push_str(&snake);
         borrow.push_str(&snake);
-        own.push_str("_t");
-        borrow.push_str("_t");
+        own = self.gen.add_suffix_t(&own);
+        borrow = self.gen.add_suffix_t(&borrow);
 
         // All resources, whether or not they're imported or exported, get the
         // ability to drop handles.
@@ -1625,7 +1632,7 @@ impl InterfaceGenerator<'_> {
             let (info, encoded) = gen_type_name(&self.resolve, ty);
             match info {
                 CTypeNameInfo::Named { name } => {
-                    let typedef_name = format!("{}_{encoded}_t", self.owner_namespace(ty));
+                    let typedef_name = self.gen.add_suffix_t(&format!("{}_{encoded}", self.owner_namespace(ty)));
                     let prev = self.gen.type_names.insert(ty, typedef_name.clone());
                     assert!(prev.is_none());
 
@@ -1635,12 +1642,12 @@ impl InterfaceGenerator<'_> {
                 CTypeNameInfo::Anonymous { is_prim } => {
                     let (defined, name) = if is_prim {
                         let namespace = self.gen.world.to_snake_case();
-                        let name = format!("{namespace}_{encoded}_t");
+                        let name = self.gen.add_suffix_t(&format!("{namespace}_{encoded}"));
                         let new_prim = self.gen.prim_names.insert(name.clone());
                         (!new_prim, name)
                     } else {
                         let namespace = self.owner_namespace(ty);
-                        (false, format!("{namespace}_{encoded}_t"))
+                        (false, self.gen.add_suffix_t(&format!("{namespace}_{encoded}")))
                     };
 
                     let prev = self.gen.type_names.insert(ty, name);
