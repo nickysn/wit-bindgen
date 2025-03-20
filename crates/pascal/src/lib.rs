@@ -343,47 +343,48 @@ end;
             let pchar_ty = self.to_pointer(&char_ty);
             let string_ty = self.string_type();
             let pstring_ty = self.to_pointer(&string_ty);
+            let string_prefix = self.strip_suffix_t(&string_ty);
             uwrite!(
                 self.src.h_helpers,
                 "
 // Constructs a string object
-function {snake}_string_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
+function {string_prefix}_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 
 // Transfers ownership of `s` into the string `ret`
-procedure {snake}_string_set(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_prefix}_set(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Creates a copy of the input nul-terminate string `s` and
 // stores it into the component model string `ret`.
-procedure {snake}_string_dup(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_prefix}_dup(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Deallocates the string pointed to by `ret`, deallocating
 // the memory behind the string.
-procedure {snake}_string_free(ret: {pstring_ty});\
+procedure {string_prefix}_free(ret: {pstring_ty});\
                ",
             );
             uwrite!(
                 self.src.c_helpers,
                 "
-function {snake}_string_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
+function {string_prefix}_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 begin
-  {snake}_string_create.ptr := ptr;
-  {snake}_string_create.len := len;
+  {string_prefix}_create.ptr := ptr;
+  {string_prefix}_create.len := len;
 end;
 
-procedure {snake}_string_set(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_prefix}_set(ret: {pstring_ty}; const s: {pchar_ty});
 begin
   ret^.ptr := {pty}(s);
   ret^.len := {strlen};
 end;
 
-procedure {snake}_string_dup(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_prefix}_dup(ret: {pstring_ty}; const s: {pchar_ty});
 begin
   ret^.len := {strlen};
   ret^.ptr := {pty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
   Move(s^, ret^.ptr^, ret^.len * {size});
 end;
 
-procedure {snake}_string_free(ret: {pstring_ty});
+procedure {string_prefix}_free(ret: {pstring_ty});
 begin
   if ret^.len > 0 then
     FreeMem(ret^.ptr);
@@ -1015,9 +1016,14 @@ impl Pascal {
 
     fn string_type(&self) -> String {
         let mut s = String::new();
-        s.push_str(&self.world.to_snake_case());
-        s.push_str("_");
-        s.push_str("string");
+        if self.opts.c_style_type_names {
+            s.push_str(&self.world.to_snake_case());
+            s.push_str("_");
+            s.push_str("string");
+        } else {
+            s.push_str(&self.world.to_pascal_case());
+            s.push_str("String");
+       }
         self.add_suffix_t(&s)
     }
 
@@ -2014,9 +2020,9 @@ impl InterfaceGenerator<'_> {
                 }
             }
             Type::String => {
-                let snake = self.gen.world.to_snake_case();
+                let string_prefix = self.gen.strip_suffix_t(&self.gen.string_type()).to_string();
                 self.src
-                    .c_helpers(&format!("{snake}_string_free({expr});\n"));
+                    .c_helpers(&format!("{string_prefix}_free({expr});\n"));
             }
             Type::Bool
             | Type::U8
