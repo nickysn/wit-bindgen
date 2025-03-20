@@ -66,6 +66,10 @@ impl std::fmt::Display for Enabled {
 #[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = "clap", derive(clap::Args))]
 pub struct Opts {
+    /// Use C style type names (my_struct_t instead of TMyStruct)
+    #[cfg_attr(feature = "clap", arg(long, default_value_t = false))]
+    pub c_style_type_names: bool,
+
     /// Skip emitting component allocation helper functions
     #[cfg_attr(feature = "clap", arg(long))]
     pub no_helpers: bool,
@@ -946,13 +950,22 @@ struct InterfaceGenerator<'a> {
 
 impl Pascal {
     fn strip_suffix_t<'a>(&self, s: &'a str) -> &'a str {
-        s.strip_suffix("_t").unwrap()
+        if self.opts.c_style_type_names {
+            s.strip_suffix("_t").unwrap()
+        } else {
+            s.strip_prefix("T").unwrap()
+        }
     }
 
     fn add_suffix_t(&self, s: &str) -> String {
         let mut q = String::new();
-        q.push_str(s);
-        q.push_str("_t");
+        if self.opts.c_style_type_names {
+            q.push_str(s);
+            q.push_str("_t");
+        } else {
+            q.push_str("T");
+            q.push_str(s);
+        }
         q
     }
 
