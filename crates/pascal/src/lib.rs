@@ -70,6 +70,10 @@ pub struct Opts {
     #[cfg_attr(feature = "clap", arg(long, default_value_t = false))]
     pub c_style_type_names: bool,
 
+    /// Use consts, instead of enums
+    #[cfg_attr(feature = "clap", arg(long, default_value_t = false))]
+    pub use_consts_instead_of_enums: bool,
+
     /// Skip emitting component allocation helper functions
     #[cfg_attr(feature = "clap", arg(long))]
     pub no_helpers: bool,
@@ -1470,30 +1474,55 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
     fn type_enum(&mut self, id: TypeId, name: &str, enum_: &Enum, docs: &Docs) {
         uwrite!(self.src.h_defs, "\n");
         self.docs(docs, SourceType::HDefs);
-        let int_t = int_repr(enum_.tag());
-        uwriteln!(
+        uwrite!(
             self.src.h_defs,
             "type\n\
             \x20 {2} = ^{1};\n\
             \x20 {1} = ^{0};\n\
-            \x20 {0} = {int_t};",
+            \x20 {0} = ",
             &self.gen.type_names[&id],
             self.gen.to_pointer(&self.gen.type_names[&id]),
             self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
+        if self.gen.opts.use_consts_instead_of_enums {
+            let int_t = int_repr(enum_.tag());
+            uwriteln!(self.src.h_defs, "{int_t};");
 
-        if enum_.cases.len() > 0 {
-            self.src.h_defs("\n");
-        }
-        let ns = self.owner_namespace(id).to_shouty_snake_case();
-        for (i, case) in enum_.cases.iter().enumerate() {
-            self.docs(&case.docs, SourceType::HDefs);
-            uwriteln!(
-                self.src.h_defs,
-                "const {ns}_{}_{} = {i};",
-                name.to_shouty_snake_case(),
-                case.name.to_shouty_snake_case(),
-            );
+            if enum_.cases.len() > 0 {
+                self.src.h_defs("\n");
+            }
+            let ns = self.owner_namespace(id).to_shouty_snake_case();
+            for (i, case) in enum_.cases.iter().enumerate() {
+                self.docs(&case.docs, SourceType::HDefs);
+                uwriteln!(
+                    self.src.h_defs,
+                    "const {ns}_{}_{} = {i};",
+                    name.to_shouty_snake_case(),
+                    case.name.to_shouty_snake_case(),
+                );
+            }
+        } else {
+            uwriteln!(self.src.h_defs, "(");
+            self.src.h_defs.indent(2);
+            let ns = self.owner_namespace(id).to_shouty_snake_case();
+            let mut first = true;
+            for (i, case) in enum_.cases.iter().enumerate() {
+                if first {
+                    first = false;
+                } else {
+                    uwriteln!(self.src.h_defs, ",");
+                }
+                self.docs(&case.docs, SourceType::HDefs);
+                uwrite!(
+                    self.src.h_defs,
+                    "{ns}_{}_{} = {i}",
+                    name.to_shouty_snake_case(),
+                    case.name.to_shouty_snake_case(),
+                );
+            }
+            uwriteln!(self.src.h_defs, "");
+            self.src.h_defs.deindent(2);
+            uwriteln!(self.src.h_defs, "\x20 );");
         }
     }
 
@@ -3228,8 +3257,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 results.push(result_tmp);
             }
 
-            Instruction::EnumLower { .. } => results.push(format!("int32({})", operands[0])),
-            Instruction::EnumLift { .. } => results.push(operands.pop().unwrap()),
+            Instruction::EnumLower { .. } => results.push(format!("Ord({})", operands[0])),
+            Instruction::EnumLift { ty, .. } => results.push(format!("{}({})", self.gen.gen.type_name(&Type::Id(*ty)), operands.pop().unwrap())),
 
             Instruction::ListCanonLower { .. } | Instruction::StringLower { .. } => {
                 results.push(format!("Pbyte(({}).ptr)", operands[0]));
