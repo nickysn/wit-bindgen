@@ -339,47 +339,49 @@ end;
                 StringEncoding::UTF16 => "char16_t",
                 StringEncoding::CompactUTF16 => panic!("Compact UTF16 unsupported"),
             };
+            let string_ty = self.add_suffix_t(&format!("{snake}_string"));
+            let pstring_ty = format!("P{string_ty}");
             uwrite!(
                 self.src.h_helpers,
                 "
 // Constructs a string object
-function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {string_ty};
 
 // Transfers ownership of `s` into the string `ret`
-procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
+procedure {snake}_string_set(ret: {pstring_ty}; const s: P{c_string_ty});
 
 // Creates a copy of the input nul-terminate string `s` and
 // stores it into the component model string `ret`.
-procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
+procedure {snake}_string_dup(ret: {pstring_ty}; const s: P{c_string_ty});
 
 // Deallocates the string pointed to by `ret`, deallocating
 // the memory behind the string.
-procedure {snake}_string_free(ret: P{snake}_string_t);\
+procedure {snake}_string_free(ret: {pstring_ty});\
                ",
             );
             uwrite!(
                 self.src.c_helpers,
                 "
-function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {snake}_string_t;
+function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {string_ty};
 begin
   {snake}_string_create.ptr := ptr;
   {snake}_string_create.len := len;
 end;
 
-procedure {snake}_string_set(ret: P{snake}_string_t; const s: P{c_string_ty});
+procedure {snake}_string_set(ret: {pstring_ty}; const s: P{c_string_ty});
 begin
   ret^.ptr := P{ty}(s);
   ret^.len := {strlen};
 end;
 
-procedure {snake}_string_dup(ret: P{snake}_string_t; const s: P{c_string_ty});
+procedure {snake}_string_dup(ret: {pstring_ty}; const s: P{c_string_ty});
 begin
   ret^.len := {strlen};
   ret^.ptr := P{ty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
   Move(s^, ret^.ptr^, ret^.len * {size});
 end;
 
-procedure {snake}_string_free(ret: P{snake}_string_t);
+procedure {snake}_string_free(ret: {pstring_ty});
 begin
   if ret^.len > 0 then
     FreeMem(ret^.ptr);
