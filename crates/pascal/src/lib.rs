@@ -595,7 +595,8 @@ impl Pascal {
             Type::String => {
                 dst.push_str(&self.world.to_snake_case());
                 dst.push_str("_");
-                dst.push_str("string_t");
+                dst.push_str("string");
+                *dst = self.add_suffix_t(dst);
                 self.needs_string = true;
             }
             Type::Id(id) => {
