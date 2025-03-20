@@ -3129,7 +3129,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let ok_payload = self.payloads.pop().unwrap();
 
                 for (i, ty) in result_types.iter().enumerate() {
-                    let name = self.locals.tmp("result");
+                    let name = self.locals.tmp("res");
                     results.push(name.clone());
                     self.local_vars.insert(&name, wasm_type(*ty));
                     let ok_result = &ok_results[i];
@@ -3178,7 +3178,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let (ok, ok_results) = self.blocks.pop().unwrap();
                 assert!(ok_results.len() == (result.ok.is_some() as usize));
 
-                let result_tmp = self.locals.tmp("result");
+                let result_tmp = self.locals.tmp("res");
                 let set_ok = if let Some(_) = result.ok.as_ref() {
                     let ok_result = &ok_results[0];
                     format!("{result_tmp}.ok := {ok_result};\n")
