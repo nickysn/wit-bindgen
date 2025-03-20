@@ -334,25 +334,27 @@ end;
                 StringEncoding::CompactUTF16 => unimplemented!(),
             };
             let ty = self.char_type();
-            let c_string_ty = match self.opts.string_encoding {
+            let pty = self.to_pointer(ty);
+            let char_ty = match self.opts.string_encoding {
                 StringEncoding::UTF8 => "char",
                 StringEncoding::UTF16 => "char16_t",
                 StringEncoding::CompactUTF16 => panic!("Compact UTF16 unsupported"),
             };
+            let pchar_ty = self.to_pointer(&char_ty);
             let string_ty = self.add_suffix_t(&format!("{snake}_string"));
-            let pstring_ty = format!("P{string_ty}");
+            let pstring_ty = self.to_pointer(&string_ty);
             uwrite!(
                 self.src.h_helpers,
                 "
 // Constructs a string object
-function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {string_ty};
+function {snake}_string_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 
 // Transfers ownership of `s` into the string `ret`
-procedure {snake}_string_set(ret: {pstring_ty}; const s: P{c_string_ty});
+procedure {snake}_string_set(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Creates a copy of the input nul-terminate string `s` and
 // stores it into the component model string `ret`.
-procedure {snake}_string_dup(ret: {pstring_ty}; const s: P{c_string_ty});
+procedure {snake}_string_dup(ret: {pstring_ty}; const s: {pchar_ty});
 
 // Deallocates the string pointed to by `ret`, deallocating
 // the memory behind the string.
@@ -362,22 +364,22 @@ procedure {snake}_string_free(ret: {pstring_ty});\
             uwrite!(
                 self.src.c_helpers,
                 "
-function {snake}_string_create(ptr: P{c_string_ty}; len: SizeUInt): {string_ty};
+function {snake}_string_create(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 begin
   {snake}_string_create.ptr := ptr;
   {snake}_string_create.len := len;
 end;
 
-procedure {snake}_string_set(ret: {pstring_ty}; const s: P{c_string_ty});
+procedure {snake}_string_set(ret: {pstring_ty}; const s: {pchar_ty});
 begin
-  ret^.ptr := P{ty}(s);
+  ret^.ptr := {pty}(s);
   ret^.len := {strlen};
 end;
 
-procedure {snake}_string_dup(ret: {pstring_ty}; const s: P{c_string_ty});
+procedure {snake}_string_dup(ret: {pstring_ty}; const s: {pchar_ty});
 begin
   ret^.len := {strlen};
-  ret^.ptr := P{ty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
+  ret^.ptr := {pty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
   Move(s^, ret^.ptr^, ret^.len * {size});
 end;
 
@@ -451,13 +453,16 @@ end;
                 h_str,
                 "\n\
                 type\n\
-                \x20 PP{snake}_string_t = ^P{snake}_string_t;\n\
-                \x20 P{snake}_string_t = ^{snake}_string_t;\n\
-                \x20 {snake}_string_t = record\n\
-                \x20   ptr: P{ty};\n\
+                \x20 {ppstring_t} = ^{pstring_t};\n\
+                \x20 {pstring_t} = ^{string_t};\n\
+                \x20 {string_t} = record\n\
+                \x20   ptr: {pty};\n\
                 \x20   len: SizeUInt;\n\
                 \x20 end;",
-                ty = self.char_type(),
+                pty = self.to_pointer(&self.char_type()),
+                string_t = self.add_suffix_t(&format!("{snake}_string")),
+                pstring_t = self.to_pointer(&self.add_suffix_t(&format!("{snake}_string"))),
+                ppstring_t = self.to_ppointer(&self.add_suffix_t(&format!("{snake}_string"))),
             );
         }
         if self.src.h_defs.len() > 0 {
@@ -599,10 +604,11 @@ impl Pascal {
             Type::F32 => dst.push_str("single"),
             Type::F64 => dst.push_str("double"),
             Type::String => {
-                dst.push_str(&self.world.to_snake_case());
-                dst.push_str("_");
-                dst.push_str("string");
-                *dst = self.add_suffix_t(dst);
+                let mut s = String::new();
+                s.push_str(&self.world.to_snake_case());
+                s.push_str("_");
+                s.push_str("string");
+                dst.push_str(&self.add_suffix_t(&s));
                 self.needs_string = true;
             }
             Type::Id(id) => {
@@ -971,6 +977,46 @@ impl Pascal {
         q
     }
 
+    fn to_pointer(&self, s: &str) -> String {
+        let mut q = String::new();
+        if self.opts.c_style_type_names {
+            q.push_str("P");
+            q.push_str(s);
+        } else {
+            q.push_str("P");
+            let st = s.strip_prefix("T");
+            match st {
+                Some(stt) => {
+                    q.push_str(stt);
+                },
+                None => {
+                    q.push_str(s);
+                },
+            }
+        }
+        q
+    }
+
+    fn to_ppointer(&self, s: &str) -> String {
+        let mut q = String::new();
+        if self.opts.c_style_type_names {
+            q.push_str("PP");
+            q.push_str(s);
+        } else {
+            q.push_str("PP");
+            let st = s.strip_prefix("T");
+            match st {
+                Some(stt) => {
+                    q.push_str(stt);
+                },
+                None => {
+                    q.push_str(s);
+                },
+            }
+        }
+        q
+    }
+
     fn print_intrinsics(&mut self) {
         // Note that these intrinsics are declared as `weak` so they can be
         // overridden from some other symbol.
@@ -1101,6 +1147,10 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
         borrow.push_str(&snake);
         own = self.gen.add_suffix_t(&own);
         borrow = self.gen.add_suffix_t(&borrow);
+        let pown = self.gen.to_pointer(&own);
+        let pborrow = self.gen.to_pointer(&borrow);
+        let ppown = self.gen.to_ppointer(&own);
+        let ppborrow = self.gen.to_ppointer(&borrow);
 
         // All resources, whether or not they're imported or exported, get the
         // ability to drop handles.
@@ -1137,8 +1187,8 @@ end;
         self.src.h_defs(&format!(
             "\n\
             type\n\
-            \x20 PP{own} = ^P{own};\n\
-            \x20 P{own} = ^{own};\n\
+            \x20 {ppown} = ^{pown};\n\
+            \x20 {pown} = ^{own};\n\
             \x20 {own} = record\n\
             \x20   __handle: int32;\n\
             \x20 end;\n"
@@ -1151,8 +1201,8 @@ end;
             self.src.h_defs(&format!(
                 "\n\
                 type\n\
-                \x20 PP{borrow} = ^P{borrow};\n\
-                \x20 P{borrow} = ^{borrow};\n\
+                \x20 {ppborrow} = ^{pborrow};\n\
+                \x20 {pborrow} = ^{borrow};\n\
                 \x20 {borrow} = record\n\
                 \x20   __handle: int32;\n\
                 \x20 end;\n"
@@ -1288,10 +1338,12 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         uwriteln!(
             self.src.h_defs,
             "type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = {int_t};",
             &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
 
         if flags.flags.len() > 0 {
@@ -1398,10 +1450,12 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         uwriteln!(
             self.src.h_defs,
             "type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = {int_t};",
             &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
 
         if enum_.cases.len() > 0 {
@@ -1434,10 +1488,12 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         uwrite!(
             self.src.h_defs,
             "type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = ",
             &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
         self.print_ty(SourceType::HDefs, ty);
         self.src.h_defs(";\n");
@@ -1483,10 +1539,12 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             self.src.h_defs,
             "\n\
             type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = ",
-            &self.gen.type_names[&id]
+            &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
         let resource = match handle {
             Handle::Borrow(id) | Handle::Own(id) => id,
@@ -1504,10 +1562,12 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             self.src.h_defs,
             "\n\
             type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = record",
-            &self.gen.type_names[&id]
+            &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
         self.src.h_defs.indent(2);
         for (i, t) in ty.types.iter().enumerate() {
@@ -1525,13 +1585,15 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             self.src.h_defs,
             "\n\
             type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = record\n\
             \x20   is_some: Boolean;\n\
             \x20   val: {ty};\n\
             \x20 end;",
-            &self.gen.type_names[&id]
+            &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
     }
 
@@ -1540,10 +1602,12 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
             self.src.h_defs,
             "\n\
             type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = record",
-            &self.gen.type_names[&id]
+            &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
         self.src.h_defs.indent(2);
         let ok_ty = ty.ok.as_ref();
@@ -1570,17 +1634,20 @@ impl<'a> wit_bindgen_core::AnonymousTypeGenerator<'a> for InterfaceGenerator<'a>
 
     fn anonymous_type_list(&mut self, id: TypeId, ty: &Type, _docs: &Docs) {
         let ty = self.gen.type_name(ty);
+        let pty = self.gen.to_pointer(&ty);
         uwriteln!(
             self.src.h_defs,
             "\n\
             type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = record\n\
-            \x20   ptr: P{ty};\n\
+            \x20   ptr: {pty};\n\
             \x20   len: SizeUInt;\n\
             \x20 end;",
-            &self.gen.type_names[&id]
+            &self.gen.type_names[&id],
+            self.gen.to_pointer(&self.gen.type_names[&id]),
+            self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
     }
 
@@ -1752,9 +1819,10 @@ impl InterfaceGenerator<'_> {
 
             TypeDefKind::List(t) => {
                 let t_name = self.gen.type_name(t);
+                let p_name = self.gen.to_pointer(&t_name);
                 let function_name = format!("{prefix}_create");
                 let result_var_name = function_name.clone();
-                let func_sig = format!("function {function_name}(ptr: P{t_name}; len: SizeUInt): {name};");
+                let func_sig = format!("function {function_name}(ptr: {p_name}; len: SizeUInt): {name};");
                 self.src.h_helpers(&format!("\n{func_sig}\n"));
                 self.src.c_helpers(&format!(
                     "\n{func_sig}\n\
@@ -1819,12 +1887,13 @@ impl InterfaceGenerator<'_> {
         let c_helpers_start = self.src.c_helpers.len();
 
         let name = self.gen.type_names[&id].clone();
+        let pname = self.gen.to_pointer(&name);
         let prefix = self.gen.strip_suffix_t(&name);
 
         self.src
-            .h_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\n"));
+            .h_helpers(&format!("\nprocedure {prefix}_free(ptr: {pname});\n"));
         self.src
-            .c_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\n"));
+            .c_helpers(&format!("\nprocedure {prefix}_free(ptr: {pname});\n"));
         let c_helpers_var_section_start = self.src.c_helpers.len();
         let mut var_section = String::new();
         self.src.c_helpers("begin\n");
@@ -1854,10 +1923,11 @@ impl InterfaceGenerator<'_> {
                 self.src.c_helpers.indent(1);
                 let mut t_name = String::new();
                 self.gen.push_type_name(t, &mut t_name);
+                let p_name = self.gen.to_pointer(&t_name);
                 var_section = format!("var\n\
                 \x20 i: SizeUInt;\n\
                 \x20 list_len: SizeUInt;\n\
-                \x20 list_ptr: P{t_name};\n");
+                \x20 list_ptr: {p_name};\n");
                 self.src
                     .c_helpers("list_ptr := ptr^.ptr;\n");
                 self.src
@@ -2288,9 +2358,10 @@ impl InterfaceGenerator<'_> {
             self.src.h_fns(&print_name);
             self.src.h_fns(": ");
             if pointer {
-                self.src.h_fns("P");
+                self.print_ptr_ty(SourceType::HFns, print_ty);
+            } else {
+                self.print_ty(SourceType::HFns, print_ty);
             }
-            self.print_ty(SourceType::HFns, print_ty);
             params.push((optional_type.is_none() && pointer, to_pascal_ident(name)));
         }
         let mut retptrs = Vec::new();
@@ -2313,8 +2384,8 @@ impl InterfaceGenerator<'_> {
             };
             self.src.h_fns(&name);
             retptrs.push(name);
-            self.src.h_fns(": P");
-            self.print_ty(SourceType::HFns, ty);
+            self.src.h_fns(": ");
+            self.print_ptr_ty(SourceType::HFns, ty);
         }
         //if func.params.len() == 0 && ret.retptrs.len() == 0 {
         //    self.src.h_fns("void");
@@ -2359,10 +2430,12 @@ impl InterfaceGenerator<'_> {
         uwriteln!(
             self.src.h_defs,
             "type\n\
-            \x20 PP{0} = ^P{0};\n\
-            \x20 P{0} = ^{0};\n\
+            \x20 {2} = ^{1};\n\
+            \x20 {1} = ^{0};\n\
             \x20 {0} = record",
-            &name
+            &name,
+            self.gen.to_pointer(&name),
+            self.gen.to_ppointer(&name),
             );
         self.src.h_defs.indent(2);
     }
@@ -2387,6 +2460,13 @@ impl InterfaceGenerator<'_> {
     fn print_ty(&mut self, stype: SourceType, ty: &Type) {
         self.gen
             .push_type_name(ty, self.src.src(stype).as_mut_string());
+    }
+
+    fn print_ptr_ty(&mut self, stype: SourceType, ty: &Type) {
+        let mut s = String::new();
+        self.gen.push_type_name(ty, &mut s);
+        let ptr_t = self.gen.to_pointer(&s);
+        self.src.src(stype).push_str(&ptr_t);
     }
 
     fn docs(&mut self, docs: &Docs, stype: SourceType) {
@@ -2561,7 +2641,7 @@ impl<'a, 'b> FunctionBindgen<'a, 'b> {
     }
 
     fn load(&mut self, ty: &str, offset: i32, operands: &[String], results: &mut Vec<String>) {
-        results.push(format!("P{}({} + {})^", ty, operands[0], offset));
+        results.push(format!("{}({} + {})^", self.gen.gen.to_pointer(ty), operands[0], offset));
     }
 
     fn load_ext(&mut self, ty: &str, offset: i32, operands: &[String], results: &mut Vec<String>) {
@@ -2573,8 +2653,8 @@ impl<'a, 'b> FunctionBindgen<'a, 'b> {
     fn store(&mut self, ty: &str, offset: i32, operands: &[String]) {
         uwriteln!(
             self.src,
-            "P{}({} + {})^ := {};",
-            ty,
+            "{}({} + {})^ := {};",
+            self.gen.gen.to_pointer(ty),
             operands[1],
             offset,
             operands[0]
@@ -2871,7 +2951,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     self.src.indent(2);
                     if let Some(ty) = case.ty.as_ref() {
                         let ty = self.gen.gen.type_name(ty);
-                        self.local_vars.insert(&payload, &format!("P{ty}"));
+                        let pty = self.gen.gen.to_pointer(&ty);
+                        self.local_vars.insert(&payload, &pty);
                         uwrite!(
                             self.src,
                             "{} := @({})",
@@ -2950,7 +3031,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let op0 = &operands[0];
                 let ty = self.gen.gen.type_name(payload);
-                self.local_vars.insert(&some_payload, &format!("P{ty}"));
+                let pty = self.gen.gen.to_pointer(&ty);
+                self.local_vars.insert(&some_payload, &pty);
                 let bind_some = format!("{some_payload} := @({op0}).val;");
 
                 uwrite!(
@@ -3133,17 +3215,18 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let list_name = self.gen.gen.type_name(&Type::Id(*ty));
                 let elem_name = self.gen.gen.type_name(element);
+                let pelem_name = self.gen.gen.to_pointer(&elem_name);
                 results.push(format!(
-                    "{}_create(P{}({}), {})",
-                    self.gen.gen.strip_suffix_t(&list_name), elem_name, operands[0], operands[1]
+                    "{}_create({}({}), {})",
+                    self.gen.gen.strip_suffix_t(&list_name), pelem_name, operands[0], operands[1]
                 ));
             }
             Instruction::StringLift { .. } => {
                 let list_name = self.gen.gen.type_name(&Type::String);
                 results.push(format!(
-                    "{}_create(P{}({}), {})",
+                    "{}_create({}({}), {})",
                     self.gen.gen.strip_suffix_t(&list_name),
-                    self.gen.gen.char_type(),
+                    self.gen.gen.to_pointer(&self.gen.gen.char_type()),
                     operands[0],
                     operands[1]
                 ));
@@ -3161,9 +3244,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let _body = self.blocks.pop().unwrap();
                 let list_name = self.gen.gen.type_name(&Type::Id(*ty));
                 let elem_name = self.gen.gen.type_name(element);
+                let pelem_name = self.gen.gen.to_pointer(&elem_name);
                 results.push(format!(
-                    "{}_create( P{}({}), {} )",
-                    self.gen.gen.strip_suffix_t(&list_name), elem_name, operands[0], operands[1]
+                    "{}_create( {}({}), {} )",
+                    self.gen.gen.strip_suffix_t(&list_name), pelem_name, operands[0], operands[1]
                 ));
             }
             Instruction::IterElem { .. } => results.push("e".to_string()),
