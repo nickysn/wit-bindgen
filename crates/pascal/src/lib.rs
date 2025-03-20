@@ -944,6 +944,10 @@ struct InterfaceGenerator<'a> {
 }
 
 impl Pascal {
+    fn strip_suffix_t<'a>(&self, s: &'a str) -> &'a str {
+        s.strip_suffix("_t").unwrap()
+    }
+
     fn print_intrinsics(&mut self) {
         // Note that these intrinsics are declared as `weak` so they can be
         // overridden from some other symbol.
@@ -1671,7 +1675,7 @@ impl InterfaceGenerator<'_> {
         //let c_helpers_start = self.src.c_helpers.len();
 
         let name = self.gen.type_names[&id].clone();
-        let prefix = name.strip_suffix("_t").unwrap();
+        let prefix = self.gen.strip_suffix_t(&name);
 
         //self.src
         //    .h_helpers(&format!("\nprocedure {prefix}_create(ptr: P{name});\n"));
@@ -1792,7 +1796,7 @@ impl InterfaceGenerator<'_> {
         let c_helpers_start = self.src.c_helpers.len();
 
         let name = self.gen.type_names[&id].clone();
-        let prefix = name.strip_suffix("_t").unwrap();
+        let prefix = self.gen.strip_suffix_t(&name);
 
         self.src
             .h_helpers(&format!("\nprocedure {prefix}_free(ptr: P{name});\n"));
@@ -2703,7 +2707,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::RecordLift { ty, record, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("{}_create(\n", name.strip_suffix("_t").unwrap());
+                let mut result = format!("{}_create(\n", self.gen.gen.strip_suffix_t(&name));
                 for (field, op) in record.fields.iter().zip(operands.iter()) {
                     let field_ty = self.gen.gen.type_name(&field.ty);
                     uwriteln!(result, "{}({}),", field_ty, op);
@@ -2724,7 +2728,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::TupleLift { ty, tuple, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("{}_create(\n", name.strip_suffix("_t").unwrap());
+                let mut result = format!("{}_create(\n", self.gen.gen.strip_suffix_t(&name));
                 for (ty, op) in tuple.types.iter().zip(operands.iter()) {
                     let ty = self.gen.gen.type_name(&ty);
                     uwriteln!(result, "{}({}),", ty, op);
@@ -3108,14 +3112,14 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let elem_name = self.gen.gen.type_name(element);
                 results.push(format!(
                     "{}_create(P{}({}), {})",
-                    list_name.strip_suffix("_t").unwrap(), elem_name, operands[0], operands[1]
+                    self.gen.gen.strip_suffix_t(&list_name), elem_name, operands[0], operands[1]
                 ));
             }
             Instruction::StringLift { .. } => {
                 let list_name = self.gen.gen.type_name(&Type::String);
                 results.push(format!(
                     "{}_create(P{}({}), {})",
-                    list_name.strip_suffix("_t").unwrap(),
+                    self.gen.gen.strip_suffix_t(&list_name),
                     self.gen.gen.char_type(),
                     operands[0],
                     operands[1]
@@ -3136,7 +3140,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let elem_name = self.gen.gen.type_name(element);
                 results.push(format!(
                     "{}_create( P{}({}), {} )",
-                    list_name.strip_suffix("_t").unwrap(), elem_name, operands[0], operands[1]
+                    self.gen.gen.strip_suffix_t(&list_name), elem_name, operands[0], operands[1]
                 ));
             }
             Instruction::IterElem { .. } => results.push("e".to_string()),
