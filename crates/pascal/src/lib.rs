@@ -150,6 +150,12 @@ enum Scalar {
     Type(Type),
 }
 
+fn to_hungarian_prefix(s: &str) -> String {
+    let mut result = String::new();
+    s.to_kebab_case().replace('-', " ").split_whitespace().for_each(|f| result.push_str(&f[0..1]) );
+    result
+}
+
 impl WorldGenerator for Pascal {
     fn preprocess(&mut self, resolve: &Resolve, world: WorldId) {
         self.world = self
@@ -1505,6 +1511,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
             uwriteln!(self.src.h_defs, "(");
             self.src.h_defs.indent(2);
             let ns = self.owner_namespace(id).to_shouty_snake_case();
+            let prefix = to_hungarian_prefix(&format!("{ns}_{}", name.to_shouty_snake_case()));
             let mut first = true;
             for (i, case) in enum_.cases.iter().enumerate() {
                 if first {
@@ -1515,9 +1522,8 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
                 self.docs(&case.docs, SourceType::HDefs);
                 uwrite!(
                     self.src.h_defs,
-                    "{ns}_{}_{} = {i}",
-                    name.to_shouty_snake_case(),
-                    case.name.to_shouty_snake_case(),
+                    "{prefix}{} = {i}",
+                    case.name.to_pascal_case(),
                 );
             }
             uwriteln!(self.src.h_defs, "");
