@@ -341,7 +341,7 @@ end;
                 StringEncoding::CompactUTF16 => panic!("Compact UTF16 unsupported"),
             };
             let pchar_ty = self.to_pointer(&char_ty);
-            let string_ty = self.add_suffix_t(&format!("{snake}_string"));
+            let string_ty = self.string_type();
             let pstring_ty = self.to_pointer(&string_ty);
             uwrite!(
                 self.src.h_helpers,
@@ -460,9 +460,9 @@ end;
                 \x20   len: SizeUInt;\n\
                 \x20 end;",
                 pty = self.to_pointer(&self.char_type()),
-                string_t = self.add_suffix_t(&format!("{snake}_string")),
-                pstring_t = self.to_pointer(&self.add_suffix_t(&format!("{snake}_string"))),
-                ppstring_t = self.to_ppointer(&self.add_suffix_t(&format!("{snake}_string"))),
+                string_t = self.string_type(),
+                pstring_t = self.to_pointer(&self.string_type()),
+                ppstring_t = self.to_ppointer(&self.string_type()),
             );
         }
         if self.src.h_defs.len() > 0 {
@@ -604,11 +604,7 @@ impl Pascal {
             Type::F32 => dst.push_str("single"),
             Type::F64 => dst.push_str("double"),
             Type::String => {
-                let mut s = String::new();
-                s.push_str(&self.world.to_snake_case());
-                s.push_str("_");
-                s.push_str("string");
-                dst.push_str(&self.add_suffix_t(&s));
+                dst.push_str(&self.string_type());
                 self.needs_string = true;
             }
             Type::Id(id) => {
@@ -1015,6 +1011,14 @@ impl Pascal {
             }
         }
         q
+    }
+
+    fn string_type(&self) -> String {
+        let mut s = String::new();
+        s.push_str(&self.world.to_snake_case());
+        s.push_str("_");
+        s.push_str("string");
+        self.add_suffix_t(&s)
     }
 
     fn print_intrinsics(&mut self) {
