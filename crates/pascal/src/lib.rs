@@ -1439,6 +1439,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         } else {
             self.gen.to_our_case(&format!("{}_tag", self.gen.type_names[&id]))
         };
+        let mut prefix = String::new();
         if self.gen.opts.use_consts_instead_of_enums {
             for (i, case) in variant.cases.iter().enumerate() {
                 self.docs(&case.docs, SourceType::HDefs);
@@ -1452,6 +1453,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         } else {
             uwriteln!(self.src.h_defs, "type\n  {tag_type_name} = (");
             self.src.h_defs.indent(2);
+            prefix = to_hungarian_prefix(&format!("{ns}_{}_tag", name));
             let mut first = true;
             for (i, case) in variant.cases.iter().enumerate() {
                 if first {
@@ -1462,9 +1464,8 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
                 self.docs(&case.docs, SourceType::HDefs);
                 uwrite!(
                     self.src.h_defs,
-                    "{ns}_{}_{} = {i}",
-                    name.to_shouty_snake_case(),
-                    case.name.to_shouty_snake_case(),
+                    "{prefix}{} = {i}",
+                    case.name.to_pascal_case(),
                 );
             }
             uwriteln!(self.src.h_defs, "");
@@ -1488,7 +1489,11 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
 
         if !cases_with_data.is_empty() {
             for (case_name, ty) in cases_with_data {
-                self.src.h_defs(&format!("{ns}_{}_{}: (", name.to_shouty_snake_case(), case_name.to_shouty_snake_case()));
+                if self.gen.opts.use_consts_instead_of_enums {
+                    self.src.h_defs(&format!("{ns}_{}_{}: (", name.to_shouty_snake_case(), case_name.to_shouty_snake_case()));
+                } else {
+                    self.src.h_defs(&format!("{prefix}{}: (", case_name.to_pascal_case()));
+                }
                 self.src.h_defs(&to_pascal_ident(case_name));
                 self.src.h_defs(": ");
                 self.print_ty(SourceType::HDefs, ty);
