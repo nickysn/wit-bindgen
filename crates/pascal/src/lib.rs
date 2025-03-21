@@ -531,6 +531,7 @@ end;
             unit_str,
             "unit {snake};\n\
             \x20 {{$PACKRECORDS C}}\n\
+            \x20 {{$PACKSET 1}}\n\
             interface\n\
             \x20 {{$I {snake}h.inc}}\n\
             implementation\n\
@@ -1369,29 +1370,56 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         let repr = flags_repr(flags);
         let int_t = int_repr(repr);
 
-        uwriteln!(
+        uwrite!(
             self.src.h_defs,
             "type\n\
             \x20 {2} = ^{1};\n\
             \x20 {1} = ^{0};\n\
-            \x20 {0} = {int_t};",
+            \x20 {0} = ",
             &self.gen.type_names[&id],
             self.gen.to_pointer(&self.gen.type_names[&id]),
             self.gen.to_ppointer(&self.gen.type_names[&id]),
         );
+        if self.gen.opts.use_consts_instead_of_enums {
+            uwriteln!(self.src.h_defs, "{int_t};");
 
-        if flags.flags.len() > 0 {
-            self.src.h_defs("\n");
-        }
-        let ns = self.owner_namespace(id).to_shouty_snake_case();
-        for (i, flag) in flags.flags.iter().enumerate() {
-            self.docs(&flag.docs, SourceType::HDefs);
-            uwriteln!(
-                self.src.h_defs,
-                "const {ns}_{}_{} = 1 shl {i};",
-                name.to_shouty_snake_case(),
-                flag.name.to_shouty_snake_case(),
-            );
+            if flags.flags.len() > 0 {
+                self.src.h_defs("\n");
+            }
+            let ns = self.owner_namespace(id).to_shouty_snake_case();
+            for (i, flag) in flags.flags.iter().enumerate() {
+                self.docs(&flag.docs, SourceType::HDefs);
+                uwriteln!(
+                    self.src.h_defs,
+                    "const {ns}_{}_{} = 1 shl {i};",
+                    name.to_shouty_snake_case(),
+                    flag.name.to_shouty_snake_case(),
+                );
+            }
+        } else {
+            uwriteln!(self.src.h_defs, "set of (");
+            self.src.h_defs.indent(2);
+
+            let ns = self.owner_namespace(id).to_shouty_snake_case();
+            let mut first = true;
+            for (i, flag) in flags.flags.iter().enumerate() {
+                if first {
+                    first = false
+                } else {
+                    uwriteln!(self.src.h_defs, ",");
+                }
+                self.docs(&flag.docs, SourceType::HDefs);
+                uwrite!(
+                    self.src.h_defs,
+                    "{ns}_{}_{} = {i}",
+                    name.to_shouty_snake_case(),
+                    flag.name.to_shouty_snake_case(),
+                );
+            }
+            uwriteln!(self.src.h_defs, "");
+            self.src.h_defs.deindent(1);
+            uwriteln!(self.src.h_defs, ");");
+            self.src.h_defs.deindent(1);
         }
     }
 
@@ -2977,7 +3005,9 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             // TODO: checked
             Instruction::FlagsLower { flags, ty, .. } => match flags_repr(flags) {
                 Int::U8 | Int::U16 | Int::U32 => {
-                    results.push(operands.pop().unwrap());
+                    let repr = flags_repr(flags);
+                    let int_t = int_repr(repr);
+                    results.push(format!("{int_t}({})", operands.pop().unwrap()));
                 }
                 Int::U64 => {
                     let name = self.gen.gen.type_name(&Type::Id(*ty));
@@ -2990,7 +3020,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
             Instruction::FlagsLift { flags, ty, .. } => match flags_repr(flags) {
                 Int::U8 | Int::U16 | Int::U32 => {
-                    results.push(operands.pop().unwrap());
+                    let name = self.gen.gen.type_name(&Type::Id(*ty));
+                    let repr = flags_repr(flags);
+                    let int_t = int_repr(repr);
+                    results.push(format!("{name}({int_t}({}))", operands.pop().unwrap()));
                 }
                 Int::U64 => {
                     let name = self.gen.gen.type_name(&Type::Id(*ty));
