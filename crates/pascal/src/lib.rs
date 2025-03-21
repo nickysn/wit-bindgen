@@ -1406,14 +1406,43 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         self.src.h_defs("\n");
 
         let ns = self.owner_namespace(id).to_shouty_snake_case();
-        for (i, case) in variant.cases.iter().enumerate() {
-            self.docs(&case.docs, SourceType::HDefs);
-            uwriteln!(
-                self.src.h_defs,
-                "const {ns}_{}_{} = {i};",
-                name.to_shouty_snake_case(),
-                case.name.to_shouty_snake_case(),
-            );
+        let tag_type_name = if self.gen.opts.use_consts_instead_of_enums {
+            int_repr(variant.tag()).to_string()
+        } else {
+            self.gen.to_our_case(&format!("{}_tag", self.gen.type_names[&id]))
+        };
+        if self.gen.opts.use_consts_instead_of_enums {
+            for (i, case) in variant.cases.iter().enumerate() {
+                self.docs(&case.docs, SourceType::HDefs);
+                uwriteln!(
+                    self.src.h_defs,
+                    "const {ns}_{}_{} = {i};",
+                    name.to_shouty_snake_case(),
+                    case.name.to_shouty_snake_case(),
+                );
+            }
+        } else {
+            uwriteln!(self.src.h_defs, "type\n  {tag_type_name} = (");
+            self.src.h_defs.indent(2);
+            let mut first = true;
+            for (i, case) in variant.cases.iter().enumerate() {
+                self.docs(&case.docs, SourceType::HDefs);
+                if first {
+                    first = false;
+                } else {
+                    uwriteln!(self.src.h_defs, ",");
+                }
+                uwrite!(
+                    self.src.h_defs,
+                    "{ns}_{}_{} = {i}",
+                    name.to_shouty_snake_case(),
+                    case.name.to_shouty_snake_case(),
+                );
+            }
+            uwriteln!(self.src.h_defs, "");
+            self.src.h_defs.deindent(1);
+            uwriteln!(self.src.h_defs, ");");
+            self.src.h_defs.deindent(1);
         }
 
         self.docs(docs, SourceType::HDefs);
@@ -1421,8 +1450,7 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
         if !cases_with_data.is_empty() {
             self.src.h_defs("case ");
         }
-        self.src.h_defs("tag: ");
-        self.src.h_defs(int_repr(variant.tag()));
+        uwrite!(self.src.h_defs, "tag: {tag_type_name}");
         if !cases_with_data.is_empty() {
             self.src.h_defs(" of\n");
             self.src.h_defs.indent(1);
@@ -3002,7 +3030,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
 
                 let expr_to_match = format!("({}).tag", operands[0]);
 
-                uwriteln!(self.src, "case int32({}) of", expr_to_match);
+                uwriteln!(self.src, "case Ord({}) of", expr_to_match);
                 self.src.indent(1);
                 for (i, ((case, (block, block_results)), payload)) in
                     variant.cases.iter().zip(blocks).zip(payloads).enumerate()
@@ -3044,8 +3072,17 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let ty = self.gen.gen.type_name(&Type::Id(*ty));
                 let result = self.locals.tmp("variant");
                 self.local_vars.insert(&result, &ty);
-                uwriteln!(self.src, "{}.tag := {};", result, operands[0]);
-                uwriteln!(self.src, "case int32({}.tag) of", result);
+                if self.gen.gen.opts.use_consts_instead_of_enums {
+                    uwriteln!(self.src, "{}.tag := {};", result, operands[0]);
+                } else {
+                    uwriteln!(
+                        self.src,
+                        "{}.tag := {}({});",
+                        result,
+                        self.gen.gen.to_our_case(&format!("{ty}_tag")),
+                        operands[0]);
+                }
+                uwriteln!(self.src, "case Ord({}.tag) of", result);
                 self.src.indent(1);
                 for (i, (case, (block, block_results))) in
                     variant.cases.iter().zip(blocks).enumerate()
