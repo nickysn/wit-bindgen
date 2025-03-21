@@ -1400,7 +1400,8 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
             uwriteln!(self.src.h_defs, "set of (");
             self.src.h_defs.indent(2);
 
-            let ns = self.owner_namespace(id).to_shouty_snake_case();
+            let ns = self.owner_namespace(id);
+            let prefix = to_hungarian_prefix(&format!("{ns}_{}", name));
             let mut first = true;
             for (i, flag) in flags.flags.iter().enumerate() {
                 if first {
@@ -1411,9 +1412,8 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
                 self.docs(&flag.docs, SourceType::HDefs);
                 uwrite!(
                     self.src.h_defs,
-                    "{ns}_{}_{} = {i}",
-                    name.to_shouty_snake_case(),
-                    flag.name.to_shouty_snake_case(),
+                    "{prefix}{} = {i}",
+                    flag.name.to_pascal_case(),
                 );
             }
             uwriteln!(self.src.h_defs, "");
