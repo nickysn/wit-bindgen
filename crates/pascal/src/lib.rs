@@ -1426,12 +1426,12 @@ void __wasm_export_{ns}_{snake}_dtor({ns}_{snake}_t* arg) {{
             self.src.h_defs.indent(2);
             let mut first = true;
             for (i, case) in variant.cases.iter().enumerate() {
-                self.docs(&case.docs, SourceType::HDefs);
                 if first {
                     first = false;
                 } else {
                     uwriteln!(self.src.h_defs, ",");
                 }
+                self.docs(&case.docs, SourceType::HDefs);
                 uwrite!(
                     self.src.h_defs,
                     "{ns}_{}_{} = {i}",
