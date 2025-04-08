@@ -300,7 +300,7 @@ impl WorldGenerator for Pascal {
         let linking_symbol = component_type_object::linking_symbol(&self.world);
         self.c_include("<stdlib.h>");
         let snake = self.world.to_snake_case();
-        let unit_name = self.to_our_case(&self.world);
+        let unit_name = self.world.to_train_case().replace('-', ".");
         let interface_file = format!("{snake}_interface.inc");
         let implementation_file = format!("{snake}_implementation.inc");
         uwriteln!(
