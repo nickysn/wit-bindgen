@@ -2448,6 +2448,7 @@ impl InterfaceGenerator<'_> {
             if i > 0 || func.params.len() > 0 {
                 self.src.h_fns("; ");
             }
+            self.src.h_fns("var ");
             let name: String = if result_rets {
                 assert!(i <= 1);
                 if i == 0 && result_rets_has_ok_type {
@@ -2463,7 +2464,7 @@ impl InterfaceGenerator<'_> {
             self.src.h_fns(&name);
             retptrs.push(name);
             self.src.h_fns(": ");
-            self.print_ptr_ty(SourceType::HFns, ty);
+            self.print_ty(SourceType::HFns, ty);
         }
         //if func.params.len() == 0 && ret.retptrs.len() == 0 {
         //    self.src.h_fns("void");
@@ -2742,7 +2743,7 @@ impl<'a, 'b> FunctionBindgen<'a, 'b> {
     fn store_in_retptr(&mut self, operand: &String) {
         self.store_op(
             operand,
-            &format!("{}^", self.sig.retptrs[self.ret_store_cnt]),
+            &format!("{}", self.sig.retptrs[self.ret_store_cnt]),
         );
         self.ret_store_cnt = self.ret_store_cnt + 1;
     }
