@@ -1881,18 +1881,9 @@ impl InterfaceGenerator<'_> {
     }
 
     fn define_constructor(&mut self, id: TypeId) {
-        //let h_helpers_start = self.src.h_helpers.len();
-        //let c_helpers_start = self.src.c_helpers.len();
-
         let name = self.gen.type_names[&id].clone();
         let prefix = self.gen.strip_suffix_t(&name);
 
-        //self.src
-        //    .h_helpers(&format!("\nprocedure {prefix}_create(ptr: P{name});\n"));
-        //self.src
-        //    .c_helpers(&format!("\nprocedure {prefix}_create(ptr: P{name});\n"));
-        //self.src.c_helpers("begin\n");
-        //let c_helpers_body_start = self.src.c_helpers.len();
         match &self.resolve.types[id].kind {
             TypeDefKind::Type(t) => {}//self.free(t, "ptr"),
 
@@ -1992,14 +1983,6 @@ impl InterfaceGenerator<'_> {
             }
             TypeDefKind::Unknown => unreachable!(),
         }
-        ////self.src.c_helpers.as_mut_string().insert_str(c_helpers_var_section_start, &var_section);
-        //if c_helpers_body_start == self.src.c_helpers.len() {
-        //    self.src.c_helpers.as_mut_string().truncate(c_helpers_start);
-        //    self.src.h_helpers.as_mut_string().truncate(h_helpers_start);
-        //    return;
-        //}
-        //self.src.c_helpers("end;\n");
-        ////self.gen.dtor_funcs.insert(id, format!("{prefix}_free"));
     }
 
     fn define_dtor(&mut self, id: TypeId) {
