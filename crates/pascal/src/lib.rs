@@ -302,8 +302,8 @@ impl WorldGenerator for Pascal {
         let snake = self.world.to_snake_case();
         let unit_name = self.world.to_train_case().replace('-', ".");
         let unit_file = format!("{unit_name}.pas");
-        let interface_file = format!("{snake}_interface.inc");
-        let implementation_file = format!("{snake}_implementation.inc");
+        let interface_file = format!("{unit_name}.Interface.inc");
+        let implementation_file = format!("{unit_name}.Implementation.inc");
         uwriteln!(
             self.src.c_adapters,
             "\n// Ensure that the *_component_type.o object is linked in"
