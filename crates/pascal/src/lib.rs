@@ -2104,14 +2104,14 @@ impl InterfaceGenerator<'_> {
     }
 
     fn c_func_name(&self, interface_id: Option<&WorldKey>, func: &Function) -> String {
-        c_func_name(
+        self.gen.to_our_case(&c_func_name(
             self.in_import,
             self.resolve,
             &self.gen.world,
             interface_id,
             func,
             &self.gen.renamed_interfaces,
-        )
+        ))
     }
 
     fn import(&mut self, interface_name: Option<&WorldKey>, func: &Function) {
