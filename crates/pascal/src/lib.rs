@@ -1905,7 +1905,7 @@ impl InterfaceGenerator<'_> {
                     params.push_str(&format!("const a{}: {}; ", to_pascal_ident(&field.name), self.gen.type_name(&field.ty)));
                 }
                 params = params.strip_suffix("; ").unwrap().to_string();
-                let function_name = format!("{prefix}_create");
+                let function_name = self.gen.to_our_case(&format!("{prefix}_create"));
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}({params}): {name};");
                 self.src.h_helpers(&format!("\n{func_sig}\n"));
@@ -1924,7 +1924,7 @@ impl InterfaceGenerator<'_> {
                     params.push_str(&format!("const a{i}: {}; ", self.gen.type_name(&ty)));
                 }
                 params = params.strip_suffix("; ").unwrap().to_string();
-                let function_name = format!("{prefix}_create");
+                let function_name = self.gen.to_our_case(&format!("{prefix}_create"));
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}({params}): {name};");
                 self.src.h_helpers(&format!("\n{func_sig}\n"));
@@ -1940,7 +1940,7 @@ impl InterfaceGenerator<'_> {
             TypeDefKind::List(t) => {
                 let t_name = self.gen.type_name(t);
                 let p_name = self.gen.to_pointer(&t_name);
-                let function_name = format!("{prefix}_create");
+                let function_name = self.gen.to_our_case(&format!("{prefix}_create"));
                 let result_var_name = function_name.clone();
                 let func_sig = format!("function {function_name}(ptr: {p_name}; len: SizeUInt): {name};");
                 self.src.h_helpers(&format!("\n{func_sig}\n"));
@@ -2931,7 +2931,9 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::RecordLift { ty, record, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("{}_create(\n", self.gen.gen.strip_suffix_t(&name));
+                let mut result = format!(
+                    "{}(\n",
+                    self.gen.gen.to_our_case(&format!("{}_create", self.gen.gen.strip_suffix_t(&name))));
                 for (field, op) in record.fields.iter().zip(operands.iter()) {
                     let field_ty = self.gen.gen.type_name(&field.ty);
                     uwriteln!(result, "{}({}),", field_ty, op);
@@ -2952,7 +2954,10 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             }
             Instruction::TupleLift { ty, tuple, .. } => {
                 let name = self.gen.gen.type_name(&Type::Id(*ty));
-                let mut result = format!("{}_create(\n", self.gen.gen.strip_suffix_t(&name));
+                let mut result = format!(
+                    "{}(\n",
+                    self.gen.gen.to_our_case(&format!("{}_create", self.gen.gen.strip_suffix_t(&name)))
+                );
                 for (ty, op) in tuple.types.iter().zip(operands.iter()) {
                     let ty = self.gen.gen.type_name(&ty);
                     uwriteln!(result, "{}({}),", ty, op);
@@ -3352,8 +3357,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let elem_name = self.gen.gen.type_name(element);
                 let pelem_name = self.gen.gen.to_pointer(&elem_name);
                 results.push(format!(
-                    "{}_create({}({}), {})",
-                    self.gen.gen.strip_suffix_t(&list_name), pelem_name, operands[0], operands[1]
+                    "{}({}({}), {})",
+                    self.gen.gen.to_our_case(&format!("{}_create", self.gen.gen.strip_suffix_t(&list_name))),
+                    pelem_name,
+                    operands[0],
+                    operands[1]
                 ));
             }
             Instruction::StringLift { .. } => {
@@ -3383,8 +3391,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let elem_name = self.gen.gen.type_name(element);
                 let pelem_name = self.gen.gen.to_pointer(&elem_name);
                 results.push(format!(
-                    "{}_create( {}({}), {} )",
-                    self.gen.gen.strip_suffix_t(&list_name), pelem_name, operands[0], operands[1]
+                    "{}( {}({}), {} )",
+                    self.gen.gen.to_our_case(&format!("{}_create", self.gen.gen.strip_suffix_t(&list_name))),
+                    pelem_name,
+                    operands[0],
+                    operands[1]
                 ));
             }
             Instruction::IterElem { .. } => results.push("e".to_string()),
