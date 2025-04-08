@@ -2261,10 +2261,7 @@ impl InterfaceGenerator<'_> {
 
         // Generate, in the C source file, the raw wasm signature that has the
         // canonical ABI.
-        uwriteln!(
-            self.src.c_adapters,
-            "\n//__attribute__((__export_name__(\"{export_name}\")))"
-        );
+        uwriteln!(self.src.c_adapters, "");
         let name = self.pascal_func_name(interface_name, func);
         let import_name = self.gen.names.tmp(&format!("__wasm_export_{name}"));
 
