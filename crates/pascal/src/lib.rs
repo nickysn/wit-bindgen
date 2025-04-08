@@ -300,6 +300,7 @@ impl WorldGenerator for Pascal {
         let linking_symbol = component_type_object::linking_symbol(&self.world);
         self.c_include("<stdlib.h>");
         let snake = self.world.to_snake_case();
+        let unit_name = self.to_our_case(&self.world);
         uwriteln!(
             self.src.c_adapters,
             "\n// Ensure that the *_component_type.o object is linked in"
@@ -529,7 +530,7 @@ end;
         source::generated_preamble(&mut unit_str, version);
         uwriteln!(
             unit_str,
-            "unit {snake};\n\
+            "unit {unit_name};\n\
             \x20 {{$MODE ObjFpc}}\n\
             \x20 {{$PACKRECORDS C}}\n\
             \x20 {{$PACKSET 1}}\n\
