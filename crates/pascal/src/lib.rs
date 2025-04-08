@@ -369,11 +369,11 @@ end;
 function {string_create}(ptr: {pchar_ty}; len: SizeUInt): {string_ty};
 
 // Transfers ownership of `s` into the string `ret`
-procedure {string_set}(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_set}(out ret: {string_ty}; const s: {pchar_ty});
 
 // Creates a copy of the input nul-terminate string `s` and
 // stores it into the component model string `ret`.
-procedure {string_dup}(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_dup}(out ret: {string_ty}; const s: {pchar_ty});
 
 // Deallocates the string pointed to by `ret`, deallocating
 // the memory behind the string.
@@ -389,17 +389,17 @@ begin
   {string_create}.len := len;
 end;
 
-procedure {string_set}(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_set}(out ret: {string_ty}; const s: {pchar_ty});
 begin
-  ret^.ptr := {pty}(s);
-  ret^.len := {strlen};
+  ret.ptr := {pty}(s);
+  ret.len := {strlen};
 end;
 
-procedure {string_dup}(ret: {pstring_ty}; const s: {pchar_ty});
+procedure {string_dup}(out ret: {string_ty}; const s: {pchar_ty});
 begin
-  ret^.len := {strlen};
-  ret^.ptr := {pty}(cabi_realloc(nil, 0, {size}, ret^.len * {size}));
-  Move(s^, ret^.ptr^, ret^.len * {size});
+  ret.len := {strlen};
+  ret.ptr := {pty}(cabi_realloc(nil, 0, {size}, ret.len * {size}));
+  Move(s^, ret.ptr^, ret.len * {size});
 end;
 
 procedure {string_free}(ret: {pstring_ty});
