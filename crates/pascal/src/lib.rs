@@ -1187,11 +1187,15 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
         let ppown = self.gen.to_ppointer(&own);
         let ppborrow = self.gen.to_ppointer(&borrow);
 
+        let drop_own = self.gen.to_our_case(&format!("{ns}_{snake}_drop_own"));
+        let drop_borrow = self.gen.to_our_case(&format!("{ns}_{snake}_drop_borrow"));
+        let borrow_fn = self.gen.to_our_case(&format!("{ns}_borrow_{snake}"));
+
         // All resources, whether or not they're imported or exported, get the
         // ability to drop handles.
         self.src.h_helpers(&format!(
             "
-procedure {ns}_{snake}_drop_own(handle: {own});\n\
+procedure {drop_own}(handle: {own});\n\
             "
         ));
         let import_module = if self.in_import {
@@ -1210,7 +1214,7 @@ procedure {ns}_{snake}_drop_own(handle: {own});\n\
             r#"
 procedure {drop_fn}(handle: int32); external '{import_module}' name '[resource-drop]{name}';
 
-procedure {ns}_{snake}_drop_own(handle: {own});
+procedure {drop_own}(handle: {own});
 begin
   {drop_fn}(handle.__handle);
 end;
@@ -1249,12 +1253,12 @@ end;
                 // also generate a version of the drop function for borrows that we
                 // possibly acquire through our exports.
                 self.src.h_helpers(&format!(
-                    "\nprocedure {ns}_{snake}_drop_borrow(handle: {borrow});\n"
+                    "\nprocedure {drop_borrow}(handle: {borrow});\n"
                 ));
 
                 self.src.c_helpers(&format!(
                     "
-procedure {ns}_{snake}_drop_borrow(handle: {borrow});
+procedure {drop_borrow}(handle: {borrow});
 begin
   __wasm_import_{ns}_{snake}_drop(handle.__handle);
 end;
@@ -1267,15 +1271,15 @@ end;
             // which will have the same index internally.
             self.src.h_helpers(&format!(
                 "
-function {ns}_borrow_{snake}(handle: {own}): {borrow};\n\
+function {borrow_fn}(handle: {own}): {borrow};\n\
                 "
             ));
 
             self.src.c_helpers(&format!(
                 r#"
-function {ns}_borrow_{snake}(handle: {own}): {borrow};
+function {borrow_fn}(handle: {own}): {borrow};
 begin
-  {ns}_borrow_{snake} := {borrow}( handle.__handle );
+  {borrow_fn} := {borrow}( handle.__handle );
 end;
 "#
             ));
