@@ -1961,10 +1961,12 @@ impl InterfaceGenerator<'_> {
         let pname = self.gen.to_pointer(&name);
         let prefix = self.gen.strip_suffix_t(&name);
 
+        let destructor_name = self.gen.to_our_case(&format!("{}_free", prefix));
+
         self.src
-            .h_helpers(&format!("\nprocedure {prefix}_free(ptr: {pname});\n"));
+            .h_helpers(&format!("\nprocedure {destructor_name}(ptr: {pname});\n"));
         self.src
-            .c_helpers(&format!("\nprocedure {prefix}_free(ptr: {pname});\n"));
+            .c_helpers(&format!("\nprocedure {destructor_name}(ptr: {pname});\n"));
         let c_helpers_var_section_start = self.src.c_helpers.len();
         let mut var_section = String::new();
         self.src.c_helpers("begin\n");
@@ -2070,7 +2072,7 @@ impl InterfaceGenerator<'_> {
             return;
         }
         self.src.c_helpers("end;\n");
-        self.gen.dtor_funcs.insert(id, format!("{prefix}_free"));
+        self.gen.dtor_funcs.insert(id, destructor_name);
     }
 
     fn free(&mut self, ty: &Type, expr: &str) {
