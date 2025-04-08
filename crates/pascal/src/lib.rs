@@ -441,29 +441,15 @@ end;
 
         source::generated_preamble(&mut h_str, version);
 
-        uwriteln!(
-            h_str,
-            "{{$ifndef __BINDINGS_{0}_H}}\n\
-            {{$define __BINDINGS_{0}_H}}\n\
-            //#ifdef __cplusplus\n\
-            //extern \"C\" {{\n\
-            //#endif",
-            self.world.to_shouty_snake_case(),
-        );
-
-        uwriteln!(h_str, "//#include <stdint.h>");
-        uwriteln!(h_str, "//#include <stdbool.h>");
-        uwriteln!(h_str, "//#include <stddef.h>");
-        for include in self.h_includes.iter() {
-            uwriteln!(h_str, "//#include {include}");
-        }
+        //for include in self.h_includes.iter() {
+        //    uwriteln!(h_str, "//#include {include}");
+        //}
 
         let mut c_str = source::Source::default();
         source::generated_preamble(&mut c_str, version);
-        uwriteln!(c_str, "//#include \"{snake}.h\"");
-        for include in self.c_includes.iter() {
-            uwriteln!(c_str, "//#include {include}");
-        }
+        //for include in self.c_includes.iter() {
+        //    uwriteln!(c_str, "//#include {include}");
+        //}
         c_str.push_str(&self.src.c_defs);
         c_str.push_str(&self.src.c_fns);
 
@@ -519,15 +505,6 @@ end;
             );
         }
         c_str.push_str(&self.src.c_adapters);
-
-        uwriteln!(
-            h_str,
-            "\n\
-            //#ifdef __cplusplus\n\
-            //}}\n\
-            //#endif\n\
-            {{$endif}}"
-        );
 
         let mut unit_str = source::Source::default();
         source::generated_preamble(&mut unit_str, version);
