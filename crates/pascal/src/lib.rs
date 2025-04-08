@@ -301,6 +301,8 @@ impl WorldGenerator for Pascal {
         self.c_include("<stdlib.h>");
         let snake = self.world.to_snake_case();
         let unit_name = self.to_our_case(&self.world);
+        let interface_file = format!("{snake}_interface.inc");
+        let implementation_file = format!("{snake}_implementation.inc");
         uwriteln!(
             self.src.c_adapters,
             "\n// Ensure that the *_component_type.o object is linked in"
@@ -535,15 +537,15 @@ end;
             \x20 {{$PACKRECORDS C}}\n\
             \x20 {{$PACKSET 1}}\n\
             interface\n\
-            \x20 {{$I {snake}h.inc}}\n\
+            \x20 {{$I {interface_file}}}\n\
             implementation\n\
-            \x20 {{$I {snake}.inc}}\n\
+            \x20 {{$I {implementation_file}}}\n\
             \x20 {{$I {snake}_exports_impl.inc}}\n\
             end.");
 
         files.push(&format!("{snake}.pas"), unit_str.as_bytes());
-        files.push(&format!("{snake}h.inc"), h_str.as_bytes());
-        files.push(&format!("{snake}.inc"), c_str.as_bytes());
+        files.push(&interface_file, h_str.as_bytes());
+        files.push(&implementation_file, c_str.as_bytes());
         if !self.opts.no_object_file {
             files.push(
                 &format!("{snake}_component_type.o",),
