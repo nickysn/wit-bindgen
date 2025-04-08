@@ -2449,7 +2449,7 @@ impl InterfaceGenerator<'_> {
             if i > 0 || func.params.len() > 0 {
                 self.src.h_fns("; ");
             }
-            self.src.h_fns("var ");
+            self.src.h_fns("out ");
             let name: String = if result_rets {
                 assert!(i <= 1);
                 if i == 0 && result_rets_has_ok_type {
