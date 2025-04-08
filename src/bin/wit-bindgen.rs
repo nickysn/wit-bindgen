@@ -47,26 +47,17 @@ enum Opt {
         args: Common,
     },
 
-    /// Generates bindings for TeaVM-based Java guest modules.
-    #[cfg(feature = "teavm-java")]
-    TeavmJava {
-        #[clap(flatten)]
-        opts: wit_bindgen_teavm_java::Opts,
-        #[clap(flatten)]
-        args: Common,
-    },
-    /// Generates bindings for TinyGo-based Go guest modules.
+    /// Generates bindings for TinyGo-based Go guest modules (Deprecated)
     #[cfg(feature = "go")]
     TinyGo {
-        #[clap(flatten)]
-        opts: wit_bindgen_go::Opts,
         #[clap(flatten)]
         args: Common,
     },
 
     /// Generates bindings for C# guest modules.
     #[cfg(feature = "csharp")]
-    CSharp {
+    #[command(alias = "c-sharp")]
+    Csharp {
         #[clap(flatten)]
         opts: wit_bindgen_csharp::Opts,
         #[clap(flatten)]
@@ -80,6 +71,12 @@ enum Opt {
         opts: wit_bindgen_pascal::Opts,
         #[clap(flatten)]
         args: Common,
+    },
+
+    // doc-comments are present on `wit_bindgen_test::Opts` for clap to use.
+    Test {
+        #[clap(flatten)]
+        opts: wit_bindgen_test::Opts,
     },
 }
 
@@ -130,6 +127,8 @@ struct Common {
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let mut files = Files::default();
     let (generator, opt) = match Opt::parse() {
         #[cfg(feature = "markdown")]
@@ -140,14 +139,14 @@ fn main() -> Result<()> {
         Opt::C { opts, args } => (opts.build(), args),
         #[cfg(feature = "rust")]
         Opt::Rust { opts, args } => (opts.build(), args),
-        #[cfg(feature = "teavm-java")]
-        Opt::TeavmJava { opts, args } => (opts.build(), args),
         #[cfg(feature = "go")]
-        Opt::TinyGo { opts, args } => (opts.build(), args),
+        Opt::TinyGo { args: _ } => {
+            bail!("Go bindgen has been moved to a separate repository. Please visit https://github.com/bytecodealliance/go-modules for the new Go bindings generator `wit-bindgen-go`.")
+        }
         #[cfg(feature = "csharp")]
-        Opt::CSharp { opts, args } => (opts.build(), args),
-        #[cfg(feature = "pascal")]
+        Opt::Csharp { opts, args } => (opts.build(), args),
         Opt::Pascal { opts, args } => (opts.build(), args),
+        Opt::Test { opts } => return opts.run(std::env::args_os().nth(0).unwrap().as_ref()),
     };
 
     gen_world(generator, &opt, &mut files).map_err(attach_with_context)?;
