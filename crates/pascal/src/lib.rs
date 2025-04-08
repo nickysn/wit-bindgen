@@ -301,6 +301,7 @@ impl WorldGenerator for Pascal {
         self.c_include("<stdlib.h>");
         let snake = self.world.to_snake_case();
         let unit_name = self.world.to_train_case().replace('-', ".");
+        let unit_file = format!("{unit_name}.pas");
         let interface_file = format!("{snake}_interface.inc");
         let implementation_file = format!("{snake}_implementation.inc");
         uwriteln!(
@@ -543,7 +544,7 @@ end;
             \x20 {{$I {snake}_exports_impl.inc}}\n\
             end.");
 
-        files.push(&format!("{snake}.pas"), unit_str.as_bytes());
+        files.push(&unit_file, unit_str.as_bytes());
         files.push(&interface_file, h_str.as_bytes());
         files.push(&implementation_file, c_str.as_bytes());
         if !self.opts.no_object_file {
