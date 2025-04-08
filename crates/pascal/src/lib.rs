@@ -2103,7 +2103,7 @@ impl InterfaceGenerator<'_> {
         }
     }
 
-    fn c_func_name(&self, interface_id: Option<&WorldKey>, func: &Function) -> String {
+    fn pascal_func_name(&self, interface_id: Option<&WorldKey>, func: &Function) -> String {
         self.gen.to_our_case(&c_func_name(
             self.in_import,
             self.resolve,
@@ -2132,7 +2132,7 @@ impl InterfaceGenerator<'_> {
         //    },
         //    func.name
         //);
-        let name = self.c_func_name(interface_name, func);
+        let name = self.pascal_func_name(interface_name, func);
         let import_name = self.gen.names.tmp(&format!("__wasm_import_{name}",));
         //self.src.c_fns("extern ");
         match sig.results.len() {
@@ -2279,7 +2279,7 @@ impl InterfaceGenerator<'_> {
             self.src.c_adapters,
             "\n//__attribute__((__export_name__(\"{export_name}\")))"
         );
-        let name = self.c_func_name(interface_name, func);
+        let name = self.pascal_func_name(interface_name, func);
         let import_name = self.gen.names.tmp(&format!("__wasm_export_{name}"));
 
         let mut f = FunctionBindgen::new(self, h_sig, &import_name);
@@ -2374,7 +2374,7 @@ impl InterfaceGenerator<'_> {
         func: &Function,
         sig_flattening: bool,
     ) -> CSig {
-        let name = self.c_func_name(interface_name, func);
+        let name = self.pascal_func_name(interface_name, func);
         self.gen.names.insert(&name).expect("duplicate symbols");
 
         let start = self.src.h_fns.len();
