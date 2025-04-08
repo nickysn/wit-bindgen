@@ -530,6 +530,7 @@ end;
         uwriteln!(
             unit_str,
             "unit {snake};\n\
+            \x20 {{$MODE ObjFpc}}\n\
             \x20 {{$PACKRECORDS C}}\n\
             \x20 {{$PACKSET 1}}\n\
             interface\n\
