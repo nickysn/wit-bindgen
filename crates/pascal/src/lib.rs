@@ -1885,11 +1885,6 @@ impl InterfaceGenerator<'_> {
         let prefix = self.gen.strip_suffix_t(&name);
 
         match &self.resolve.types[id].kind {
-            TypeDefKind::Type(t) => {}//self.free(t, "ptr"),
-
-            TypeDefKind::Flags(_) => {}
-            TypeDefKind::Enum(_) => {}
-
             TypeDefKind::Record(r) => {
                 let mut params = String::new();
                 for field in r.fields.iter() {
@@ -1943,44 +1938,17 @@ impl InterfaceGenerator<'_> {
                     end;\n"));
             }
 
-            TypeDefKind::Variant(v) => {
-                //self.src.c_helpers("switch ((int32_t) ptr->tag) {\n");
-                //for (i, case) in v.cases.iter().enumerate() {
-                //    if let Some(ty) = &case.ty {
-                //        uwriteln!(self.src.c_helpers, "case {}: {{", i);
-                //        let expr = format!("&ptr->val.{}", to_c_ident(&case.name));
-                //        self.free(ty, &expr);
-                //        self.src.c_helpers("break;\n");
-                //        self.src.c_helpers("}\n");
-                //    }
-                //}
-                //self.src.c_helpers("}\n");
-            }
-
-            TypeDefKind::Option(t) => {
-                //self.src.c_helpers("if (ptr->is_some) {\n");
-                //self.free(t, "&ptr->val");
-                //self.src.c_helpers("}\n");
-            }
-
-            TypeDefKind::Result(r) => {
-                //self.src.c_helpers("if (!ptr->is_err) {\n");
-                //if let Some(ok) = &r.ok {
-                //    self.free(ok, "&ptr->val.ok");
-                //}
-                //if let Some(err) = &r.err {
-                //    self.src.c_helpers("} else {\n");
-                //    self.free(err, "&ptr->val.err");
-                //}
-                //self.src.c_helpers("}\n");
-            }
+            TypeDefKind::Type(_) => {}
+            TypeDefKind::Flags(_) => {}
+            TypeDefKind::Enum(_) => {}
+            TypeDefKind::Variant(_) => {}
+            TypeDefKind::Option(_) => {}
+            TypeDefKind::Result(_) => {}
+            TypeDefKind::Resource => {}
+            TypeDefKind::Handle(_) => {}
             TypeDefKind::Future(_) => todo!("print_constructor for future"),
             TypeDefKind::Stream(_) => todo!("print_constructor for stream"),
             TypeDefKind::ErrorContext => todo!("print_constructor for error-context"),
-            TypeDefKind::Resource => {}
-            TypeDefKind::Handle(Handle::Borrow(id) | Handle::Own(id)) => {
-                //self.free(&Type::Id(*id), "*ptr");
-            }
             TypeDefKind::Unknown => unreachable!(),
         }
     }
